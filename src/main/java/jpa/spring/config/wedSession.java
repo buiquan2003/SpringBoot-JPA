@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionListener;
 
 @Component
-public class wedSession implements  HttpSessionListener {
+public class wedSession implements HttpSessionListener {
 
     private static int numberSesstion = 0;
 

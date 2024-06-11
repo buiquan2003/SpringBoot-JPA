@@ -2,27 +2,27 @@ package jpa.spring.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import jpa.spring.core.ReponseObject;
-import jpa.spring.model.User;
+// import jpa.spring.model.dto.ChangPasswordDTO;
+import jpa.spring.model.dto.UserCertification;
+import jpa.spring.model.entities.User;
 import jpa.spring.service.UserService;
 import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+// import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/auth")
 public class UserController {
 
     @Autowired
@@ -38,34 +38,32 @@ public class UserController {
         }
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<ReponseObject<User>> registerUser(@RequestBody User newUser) {
-        return userService.RegisterUser(newUser);
+    @PostMapping(path = "/signup")
+    public ResponseEntity<ReponseObject<User>> register(@RequestBody @Valid User register) throws Exception {
+        User user = userService.register(register);
+        ReponseObject<User> result = new ReponseObject<>();
+        result.setMessage("Create a new account successfully");
+        result.setData(user);
+        return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.OK);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ReponseObject<User>> loginUser(@RequestBody User loginUser, HttpSession httpSession, HttpServletResponse response, HttpServletRequest request ) {
-        ReponseObject<User> responseObject = new ReponseObject<>();
-
-        boolean isValidUser = userService.validateUserCredentials(loginUser);
-
-        if (isValidUser) {
-            httpSession = request.getSession();
-            httpSession.setAttribute("username", new User());
-            // httpSession.removeAttribute("username");
-            // httpSession.invalidate();
-            Cookie cookie = new Cookie("username", loginUser.getUsername());
-            cookie.setMaxAge(7 * 24 *60 *60);
-            cookie.setPath("/");
-            responseObject.setMessage("success");
-            responseObject.setData(loginUser);
-            responseObject.setMessage("Login successful");
-            response.addCookie(cookie);
-            return ResponseEntity.ok(responseObject);
-        } else {
-            responseObject.setMessage("fail");
-            responseObject.setMessage("Invalid username or password");
-            return ResponseEntity.status(401).body(responseObject);
-        }
+    @PostMapping("/signin")
+    public ResponseEntity<ReponseObject<UserCertification>> authenticate(@RequestBody User user) {
+        UserCertification auth = userService.authetioncate(user);
+        ReponseObject<UserCertification> result = new ReponseObject<>();
+        result.setMessage("sign in successfully");
+        result.setData(auth);
+        return new ResponseEntity<ReponseObject<UserCertification>>(result, HttpStatus.OK);
     }
+
+    // @PutMapping("/changPassword")
+    // public ResponseEntity<ReponseObject<User>> authenticate(@RequestBody ChangPasswordDTO changPasswordDTO)
+    //         throws Exception {
+    //     User user = userService.changPassword(changPasswordDTO);
+    //     ReponseObject<User> result = new ReponseObject<>();
+    //     result.setMessage("Chang password successfully");
+    //     result.setData(user);
+    //     return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.OK);
+    // }
+
 }
