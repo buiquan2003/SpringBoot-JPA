@@ -1,26 +1,38 @@
 package jpa.spring.service;
 
-import java.util.Collections;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import jpa.spring.config.security.JwtTokenProvider;
+import jpa.spring.config.security.UserAccountDetail;
 import jpa.spring.core.ReponseObject;
-import jpa.spring.core.furiError;
-import jpa.spring.model.User;
+import jpa.spring.model.dto.ChangPasswordDTO;
+import jpa.spring.model.dto.UserCertification;
+import jpa.spring.model.entities.TokenAccount;
+import jpa.spring.model.entities.User;
 import jpa.spring.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Service
 public class UserService {
 
     @Autowired
-    private UserRepository repository;
+    private final UserRepository repository;
+
+    private final AuthenticationManager authenticationManager;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public ReponseObject<List<User>> getAllUser() {
         ReponseObject<List<User>> reponseObject = new ReponseObject<>();
@@ -31,31 +43,60 @@ public class UserService {
 
     }
 
-    public ResponseEntity<ReponseObject<User>> RegisterUser(@RequestBody User newUser) {
-        List<User> foundUser = repository.findByUsername(newUser.getUsername().trim());
-        furiError error = new furiError("404", "Tên người dùng đã tồn tại");
-        if (!foundUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                    new ReponseObject<User>(
-                            "false",
-                            Collections.singletonList(error),
-                            null,
-                            null));
+    public User register(User registerDTO) throws Exception {
+        if (repository.findById(registerDTO.getUsername()).isPresent()) {
+            throw new Exception("Username " + registerDTO.getUsername() + " is already exist.");
         }
-        PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        String hashPassword = passwordEncoder.encode(newUser.getPassword());
-        newUser.setPassword(hashPassword);
-        User savedUser = repository.save(newUser);
-        return ResponseEntity.status(HttpStatus.OK).body(
-                new ReponseObject<User>(
-                        "true",
-                        null,
-                        null,
-                        savedUser));
+
+        String hashPassword = bCryptPasswordEncoder.encode(registerDTO.getPassword());
+        User newUserAccount = new User();
+        newUserAccount.setUsername(registerDTO.getUsername());
+        newUserAccount.setEmail(registerDTO.getEmail());
+        newUserAccount.setPassword(hashPassword);
+        newUserAccount.setRole("ROLE_USER");
+        newUserAccount.setDelFlag(false);
+        newUserAccount.setUTimestmap(ZonedDateTime.now());
+        repository.save(newUserAccount);
+        return newUserAccount;
     }
 
     public boolean validateUserCredentials(@RequestBody User loginUser) {
-        System.out.println("Validating user: " + loginUser.getUsername() + " with password: " + loginUser.getPassword()); 
-        return loginUser.getUsername().equals(loginUser.getUsername()) && loginUser.getPassword().equals(loginUser.getPassword());
+        System.out
+                .println("Validating user: " + loginUser.getUsername() + " with password: " + loginUser.getPassword());
+        return loginUser.getUsername().equals(loginUser.getUsername())
+                && loginUser.getPassword().equals(loginUser.getPassword());
+    }
+
+    public UserCertification authetioncate(User user) {
+        authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+        UserAccountDetail accountDetail = repository
+                .findById(user.getUsername())
+                .map(userAccount -> new UserAccountDetail(userAccount))
+                .orElseThrow();
+
+        TokenAccount tokenAccount = new TokenAccount();
+        tokenAccount.setContent(jwtTokenProvider.generateToken(accountDetail));
+
+        UserCertification certification = new UserCertification();
+        certification.setUsername(user.getUsername());
+        certification.setAccessToken(tokenAccount.getContent());
+        return certification;
+    }
+
+  public User changPassword(ChangPasswordDTO changPasswordDTO) throws Exception {
+        String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+
+        User user = repository.findByUsername(currentUsername)
+                .orElseThrow(() -> new Exception("User not found"));
+
+
+
+        String hashPassword = bCryptPasswordEncoder.encode(changPasswordDTO.getNewPassword());
+
+        user.setPassword(hashPassword);
+        repository.save(user);
+
+        return user;
     }
 }

@@ -23,11 +23,8 @@ public class Manager implements Filter {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
         String uri = httpRequest.getRequestURI();
         System.out.println("Request URI: " + uri);
-
-        // Chuyển tiếp yêu cầu đến filter hoặc servlet tiếp theo
         chain.doFilter(request, response);
 
-        System.out.println("Response completed for URI: " + uri);
    }
     
    @Override

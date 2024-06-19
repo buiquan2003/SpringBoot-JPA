@@ -1,10 +1,13 @@
 package jpa.spring.repository;
 
-import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import jpa.spring.model.User;
+
+import jpa.spring.model.entities.User;
 
 
-public interface UserRepository extends JpaRepository<User, Integer> {
-   List<User> findByUsername(String username);
+public interface UserRepository extends JpaRepository<User, String> {
+   //Optional một người truy cập
+   Optional<User> findByUsername(String username);
 } 
