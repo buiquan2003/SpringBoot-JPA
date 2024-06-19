@@ -1,17 +1,27 @@
 {"properties": [
-    {
-      "name": "security.jwt.expiration-time",
-      "type": "java.lang.String",
-      "description": "A description for 'security.jwt.expiration-time'"
-    },
-    {
-      "name": "security.jwt.secret-key",
-      "type": "java.lang.String",
-      "description": "A description for 'security.jwt.secret-key'"
-    },
-    {
-      "name": "application.yml",
-      "type": "java.lang.String",
-      "description": "A description for 'application.yml'"
-    }
-  ]}
+  {
+    "name": "security.jwt.expiration-time",
+    "type": "java.lang.String",
+    "description": "A description for 'security.jwt.expiration-time'"
+  },
+  {
+    "name": "security.jwt.refresh-expiration-time",
+    "type": "java.lang.String",
+    "description": "A description for 'security.jwt.refresh-expiration-time'"
+  },
+  {
+    "name": "security.jwt.secret-key",
+    "type": "java.lang.String",
+    "description": "A description for 'security.jwt.secret-key'"
+  },
+  {
+    "name": "application.yml",
+    "type": "java.lang.String",
+    "description": "A description for 'application.yml'"
+  },
+  {
+    "name": "spring.session.store-type",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.session.store-type'"
+  }
+]}

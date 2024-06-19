@@ -13,6 +13,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jpa.spring.config.security.JwtTokenProvider;
 import jpa.spring.config.security.UserAccountDetail;
 import jpa.spring.core.ReponseObject;
@@ -20,6 +23,7 @@ import jpa.spring.model.dto.ChangPasswordDTO;
 import jpa.spring.model.dto.UserCertification;
 import jpa.spring.model.entities.TokenAccount;
 import jpa.spring.model.entities.User;
+import jpa.spring.repository.TokenAccountRepository;
 import jpa.spring.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +33,9 @@ public class UserService {
 
     @Autowired
     private final UserRepository repository;
+
+    @Autowired
+    private final TokenAccountRepository repositoryAccount;
 
     private final AuthenticationManager authenticationManager;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -76,27 +83,38 @@ public class UserService {
                 .orElseThrow();
 
         TokenAccount tokenAccount = new TokenAccount();
-        tokenAccount.setContent(jwtTokenProvider.generateToken(accountDetail));
+        tokenAccount.setAccsessToken(jwtTokenProvider.generateToken(accountDetail));
+        tokenAccount.setRefreshToken(jwtTokenProvider.generateRefreshToken(accountDetail));
+        tokenAccount.setUsername(user.getUsername());
+        tokenAccount.setOwner(user);
+        repositoryAccount.save(tokenAccount);
 
         UserCertification certification = new UserCertification();
         certification.setUsername(user.getUsername());
-        certification.setAccessToken(tokenAccount.getContent());
+        certification.setAccessToken(tokenAccount.getAccsessToken());
+        certification.setExpiredTime(ZonedDateTime.now());
+        certification.setRefreshToken(tokenAccount.getRefreshToken());
+        certification.setRefreshTime(ZonedDateTime.now());
         return certification;
+
     }
 
-  public User changPassword(ChangPasswordDTO changPasswordDTO) throws Exception {
-        String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
-
+    public User changPassword(ChangPasswordDTO changPasswordDTO) throws Exception {
+        String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                .getUsername();
         User user = repository.findByUsername(currentUsername)
                 .orElseThrow(() -> new Exception("User not found"));
-
-
-
         String hashPassword = bCryptPasswordEncoder.encode(changPasswordDTO.getNewPassword());
-
         user.setPassword(hashPassword);
         repository.save(user);
-
         return user;
+    }
+
+     public void logout(HttpServletRequest request, HttpServletResponse response) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        SecurityContextHolder.clearContext();
     }
 }
