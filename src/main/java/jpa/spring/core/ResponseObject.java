@@ -15,10 +15,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @JsonInclude(Include.NON_NULL)
-public class ReponseObject<T> {
+public class ResponseObject<T> {
   
     private String message;
-    private List<furiError> errors;
-    private furiError error;
+    private List<ErrorObject> errors;
+    private ErrorObject error;
     private T data;
 }

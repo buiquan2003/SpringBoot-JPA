@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class furiError {
+public class ErrorObject {
     public enum FurnitureErrorCode {
         UNKNOW,
         DATA_INVALID, ACCOUNT_EXIST
@@ -14,7 +14,7 @@ public class furiError {
     private String code;
     private String message;
 
-    public furiError(String code, String message) {
+    public ErrorObject(String code, String message) {
         this.code = code;
         this.message = message;
     }

@@ -12,11 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jpa.spring.core.ReponseObject;
+import jpa.spring.core.ResponseObject;
 import jpa.spring.model.dto.ChangPasswordDTO;
 import jpa.spring.model.entities.User;
 import jpa.spring.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -27,25 +29,31 @@ public class FuntionUser {
     private final UserService userService;
 
     @PutMapping("/changpassword")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<ReponseObject<User>> authenticate(@RequestBody ChangPasswordDTO changPasswordDTO) {
-        ReponseObject<User> result = new ReponseObject<>();
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseObject<User>> authenticate(@RequestBody ChangPasswordDTO changPasswordDTO) {
+        ResponseObject<User> result = new ResponseObject<>();
         try {
             User user = userService.changPassword(changPasswordDTO);
             result.setMessage("Chang password successfully");
             result.setData(user);
-            return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.OK);
+            return new ResponseEntity<ResponseObject<User>>(result, HttpStatus.OK);
         } catch (Exception e) {
             result.setMessage("Chang password faild");
             result.setData(null);
-            return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<ResponseObject<User>>(result, HttpStatus.BAD_REQUEST);
         }
 
     }
 
+    @PutMapping("/editUser")
+    public String putMethodName(@PathVariable String id, @RequestBody String entity) {
+        
+        return entity;
+    }
+
     @GetMapping("/logout")
-    public ResponseEntity<ReponseObject<Void>> logout(HttpServletRequest request, HttpServletResponse response) {
-        ReponseObject<Void> result = new ReponseObject<>();
+    public ResponseEntity<ResponseObject<Void>> logout(HttpServletRequest request, HttpServletResponse response) {
+        ResponseObject<Void> result = new ResponseObject<>();
         try {
             userService.logout(request, response);
             result.setMessage("Logout successfully");
@@ -55,4 +63,6 @@ public class FuntionUser {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
     }
+    
+
 }

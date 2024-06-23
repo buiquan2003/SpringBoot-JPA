@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jpa.spring.config.security.JwtTokenProvider;
 import jpa.spring.config.security.UserAccountDetail;
-import jpa.spring.core.ReponseObject;
+import jpa.spring.core.ResponseObject;
 import jpa.spring.model.dto.ChangPasswordDTO;
 import jpa.spring.model.dto.UserCertification;
 import jpa.spring.model.entities.TokenAccount;
@@ -41,8 +41,8 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public ReponseObject<List<User>> getAllUser() {
-        ReponseObject<List<User>> reponseObject = new ReponseObject<>();
+    public ResponseObject<List<User>> getAllUser() {
+        ResponseObject<List<User>> reponseObject = new ResponseObject<>();
         List<User> users = repository.findAll();
         reponseObject.setMessage("Success");
         reponseObject.setData(users);
@@ -110,7 +110,17 @@ public class UserService {
         return user;
     }
 
-     public void logout(HttpServletRequest request, HttpServletResponse response) {
+    public User editUser(User user) throws Exception {
+        String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                .getUsername();
+        User edit = repository.findByUsername(currentUsername).orElseThrow(() -> new Exception(" user not found"));
+        String eamil = user.getEmail();
+        edit.setEmail(eamil);
+        repository.save(edit);
+        return edit;
+    }
+
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();

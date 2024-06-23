@@ -6,10 +6,10 @@ import java.time.ZonedDateTime;
 /**
  * class FurnitureDateTimeUtils dùng setUp phần dateTime
  */
-public class FurnitureDateTimeUtils {
-    public static final FurnitureDateTimeUtils shared = new FurnitureDateTimeUtils();
+public class SpringDateTimeUtils {
+    public static final SpringDateTimeUtils shared = new SpringDateTimeUtils();
     private static final ZoneId UTC_ZONED_ID = ZoneId.of("+00:00");
-    private FurnitureDateTimeUtils() {
+    private SpringDateTimeUtils() {
     }
     public Timestamp timestampFrom(ZonedDateTime zonedDateTime) {
         ZonedDateTime zdt = ZonedDateTime.ofInstant(zonedDateTime.toInstant(), UTC_ZONED_ID);
