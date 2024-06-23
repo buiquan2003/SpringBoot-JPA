@@ -6,7 +6,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.servlet.http.HttpSessionBindingEvent;
 import jakarta.servlet.http.HttpSessionBindingListener;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jpa.spring.config.validation.StrongPassword;
+import jpa.spring.config.validation.UserAccountElement;
+import jpa.spring.core.Constant.UserAccountRegex;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -15,11 +19,20 @@ import lombok.Setter;
 @RequiredArgsConstructor
 @Getter
 @Setter
+@UserAccountElement.List({
+        @UserAccountElement(field = "username", regex = UserAccountRegex.USERNAME, message = "username"),
+        @UserAccountElement(field = "email", regex = UserAccountRegex.EMAIL, message = "email"),
+})
 public class User implements HttpSessionBindingListener {
     @Id
+    @NotBlank(message = "Username cannot be blank")
     private String username;
+    
     private String email;
+
+    @StrongPassword(message = "password")
     private String password;
+    
     private String role;
     
     private ZonedDateTime uTimestmap;

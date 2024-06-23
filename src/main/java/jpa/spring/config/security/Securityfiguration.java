@@ -32,7 +32,6 @@ public class Securityfiguration {
     private final JwtAuthenticationFilter authenticationFilter;
     private final DataSource dataSource;
 
-
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http

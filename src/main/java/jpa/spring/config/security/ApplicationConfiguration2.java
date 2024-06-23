@@ -9,8 +9,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.session.web.http.CookieSerializer;
-import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.security.authentication.AuthenticationProvider;
 import jpa.spring.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,18 +44,6 @@ public class ApplicationConfiguration2 {
         authenticationProvider.setPasswordEncoder(bCryptPasswordEncoder());
 
         return authenticationProvider;
-    }
-
-
-    @Bean
-    public CookieSerializer cookieSerializer() {
-        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
-        serializer.setCookieName("SESSION_ID"); 
-        serializer.setCookieMaxAge(7 * 24 * 60 * 60); 
-        serializer.setCookiePath("/"); 
-        serializer.setUseHttpOnlyCookie(true); 
-        serializer.setUseSecureCookie(true);
-        return serializer;
     }
 
 }
