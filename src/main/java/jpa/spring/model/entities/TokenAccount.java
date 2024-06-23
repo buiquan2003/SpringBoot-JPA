@@ -16,11 +16,16 @@ import lombok.Setter;
 @RequiredArgsConstructor
 @Entity
 public class TokenAccount {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long tokenId;
 
-    private String content;
+    private String username;
+
+    private String accsessToken;
+
+    private String refreshToken;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_account_id")

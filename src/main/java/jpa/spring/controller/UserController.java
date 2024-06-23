@@ -2,9 +2,12 @@ package jpa.spring.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jpa.spring.core.ReponseObject;
-// import jpa.spring.model.dto.ChangPasswordDTO;
 import jpa.spring.model.dto.UserCertification;
 import jpa.spring.model.entities.User;
 import jpa.spring.service.UserService;
@@ -15,10 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-// import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+//import org.springframework.session.web.http.CookieSerializer;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +31,9 @@ public class UserController {
 
     @Autowired
     private final UserService userService;
+
+    // @Autowired
+    // private final CookieSerializer cookieSerializer;
 
     @GetMapping("/getAll")
     public ResponseEntity<ReponseObject<List<User>>> getAllUser() {
@@ -39,31 +46,50 @@ public class UserController {
     }
 
     @PostMapping(path = "/signup")
-    public ResponseEntity<ReponseObject<User>> register(@RequestBody @Valid User register) throws Exception {
-        User user = userService.register(register);
+    public ResponseEntity<ReponseObject<User>> register(@RequestBody @Valid User register) {
         ReponseObject<User> result = new ReponseObject<>();
-        result.setMessage("Create a new account successfully");
-        result.setData(user);
-        return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.OK);
+        try {
+            User user = userService.register(register);
+            result.setMessage("Create a new account successfully");
+            result.setData(user);
+            return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            result.setMessage("Failed to create a new account: " + e.getMessage());
+            result.setData(null);
+            return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.BAD_REQUEST);
+        }
+
     }
 
+    /**
+     * @param user
+     * @param httpSession
+     * @param response
+     * @param request
+     * @return
+     */
     @PostMapping("/signin")
-    public ResponseEntity<ReponseObject<UserCertification>> authenticate(@RequestBody User user) {
-        UserCertification auth = userService.authetioncate(user);
+    public ResponseEntity<ReponseObject<UserCertification>> authenticate(@RequestBody @Valid User user,
+            HttpSession httpSession, HttpServletResponse response, HttpServletRequest request) {
         ReponseObject<UserCertification> result = new ReponseObject<>();
-        result.setMessage("sign in successfully");
-        result.setData(auth);
-        return new ResponseEntity<ReponseObject<UserCertification>>(result, HttpStatus.OK);
-    }
+        try {
+            UserCertification auth = userService.authetioncate(user);
+            result.setMessage("sign in successfully");
+            result.setData(auth);
+            httpSession = request.getSession();
+            httpSession.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-    // @PutMapping("/changPassword")
-    // public ResponseEntity<ReponseObject<User>> authenticate(@RequestBody ChangPasswordDTO changPasswordDTO)
-    //         throws Exception {
-    //     User user = userService.changPassword(changPasswordDTO);
-    //     ReponseObject<User> result = new ReponseObject<>();
-    //     result.setMessage("Chang password successfully");
-    //     result.setData(user);
-    //     return new ResponseEntity<ReponseObject<User>>(result, HttpStatus.OK);
-    // }
+            Cookie cookie = new Cookie("auth", auth.getAccessToken());
+            cookie.setMaxAge(7 * 24 * 60 * 60); 
+            cookie.setPath("/");
+            response.addCookie(cookie);
+
+            return new ResponseEntity<ReponseObject<UserCertification>>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            result.setMessage("sign in Failed");
+            result.setData(null);
+            return new ResponseEntity<ReponseObject<UserCertification>>(result, HttpStatus.BAD_REQUEST);
+        }
+    }
 
 }
