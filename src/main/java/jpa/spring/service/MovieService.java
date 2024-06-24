@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jpa.spring.config.exception.UnknowException;
 import jpa.spring.model.entities.Movie;
 import jpa.spring.repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +27,10 @@ public class MovieService {
         return movieRepository.findById(id);
     }
     
-    public Movie addMovie(Movie movie) throws Exception {
+    public Movie addMovie(Movie movie) {
         Optional<Movie> movieWithTitleOpt = movieRepository.findBytitle(movie.getTitle());
         if (movieWithTitleOpt.isPresent()) {
-            throw new Exception("Movie with title \"" + movie.getTitle() + "\" already exists.");
+            throw new UnknowException("Movie with title \"" + movie.getTitle() + "\" already exists.");
         }
        
         movie.setCreatedAt(ZonedDateTime.now());
@@ -38,10 +39,10 @@ public class MovieService {
         return movie;
     }
     
-    public Movie editMovie(Long movieId, Movie movie) throws Exception {
+    public Movie editMovie(Long movieId, Movie movie) {
         Optional<Movie> existingMovieOpt = movieRepository.findById(movieId);
         if (!existingMovieOpt.isPresent()) {
-            throw new Exception("Movie with ID " + movieId + " does not exist.");
+            throw new UnknowException("Movie with ID " + movieId + " does not exist.");
         }
 
         Movie existingMovie = existingMovieOpt.get();
@@ -60,7 +61,7 @@ public class MovieService {
 
     public void deleteMovie(Long movieId) throws Exception {
         Movie existingMovie = movieRepository.findById(movieId).orElseThrow(() -> 
-        new Exception("Movie with ID " + movieId + " does not exist.")
+        new UnknowException("Movie with ID " + movieId + " does not exist.")
     );
     existingMovie.setDelFlag(true);
     movieRepository.save(existingMovie);

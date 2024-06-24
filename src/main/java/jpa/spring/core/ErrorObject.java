@@ -6,15 +6,15 @@ import lombok.Setter;
 @Setter
 @Getter
 public class ErrorObject {
-    public enum FurnitureErrorCode {
+    public enum ErrorCode {
         UNKNOW,
         DATA_INVALID, ACCOUNT_EXIST
     }
 
-    private String code;
+    private ErrorCode code;
     private String message;
 
-    public ErrorObject(String code, String message) {
+    public ErrorObject(ErrorCode code, String message) {
         this.code = code;
         this.message = message;
     }
