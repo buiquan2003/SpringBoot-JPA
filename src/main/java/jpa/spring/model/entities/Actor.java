@@ -1,8 +1,12 @@
 package jpa.spring.model.entities;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -24,7 +28,10 @@ public class Actor {
     @NotBlank(message = "Name is mandatory")
     private String name;
 
-    @ManyToMany(mappedBy = "actors")
-    private Set<Movie> movies;
+    @ManyToMany(mappedBy = "actors", fetch = FetchType.LAZY)
+    @JsonBackReference
+    private Set<Movie> movies = new HashSet<>();
+    
+    private Boolean delFlag;
 
 }

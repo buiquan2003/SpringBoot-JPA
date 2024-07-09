@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import java.time.ZonedDateTime;
 
-
 @Getter
 @Setter
 @RequiredArgsConstructor
@@ -26,6 +25,5 @@ public class WatchHistory {
 
     private Boolean delFlag;
     private ZonedDateTime createdAt = ZonedDateTime.now();
-
 
 }

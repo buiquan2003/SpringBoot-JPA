@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import jpa.spring.core.ResponseObject;
+import jpa.spring.model.dto.MovieDTO;
 import jpa.spring.model.entities.Movie;
 import jpa.spring.service.MovieService;
 import lombok.RequiredArgsConstructor;
@@ -30,68 +31,49 @@ public class MovieController {
     private final MovieService movieService;
 
     @GetMapping("/getAllMovie")
-    public ResponseObject<List<Movie>> getAllMovies() {
-        ResponseObject<List<Movie>> responseObject = new ResponseObject<>();
-        try {
-            List<Movie> movies = movieService.getAllMovies();
-            responseObject.setMessage("Movies retrieved successfully");
-            responseObject.setData(movies);
-        } catch (Exception e) {
-            responseObject.setMessage("Failed to retrieve movies");
-
-        }
-        return responseObject;
+    public ResponseEntity<ResponseObject<List<MovieDTO>>> getAllMovies() {
+        ResponseObject<List<MovieDTO>> responseObject = new ResponseObject<>();
+        List<MovieDTO> movies = movieService.getAllMovies();
+        responseObject.setMessage("Movies retrieved successfully");
+        responseObject.setData(movies);
+        return new ResponseEntity<>(responseObject, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
+    public ResponseEntity<ResponseObject<Movie>> getMovieById(@PathVariable Long id) {
         Optional<Movie> movie = movieService.getMovieById(id);
-        return movie.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        ResponseObject<Movie> result = new ResponseObject<>();
+        result.setMessage("Movies get by id successfully");
+        result.setData(movie.get());
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
 
     @PostMapping("/addMovie")
     public ResponseEntity<ResponseObject<Movie>> addMovie(@RequestBody Movie movie) {
         ResponseObject<Movie> result = new ResponseObject<>();
-        try {
-            Movie newMovie = movieService.addMovie(movie);
+        Movie newMovie = movieService.addMovie(movie);
             result.setMessage("Create a new Movie successfully");
             result.setData(newMovie);
             return new ResponseEntity<ResponseObject<Movie>>(result, HttpStatus.OK);
-        } catch (Exception e) {
-            result.setMessage("Failed to create a new Movie: " + e.getMessage());
-            result.setData(null);
-            return new ResponseEntity<ResponseObject<Movie>>(result, HttpStatus.BAD_REQUEST);
-        }
     }
 
     @PutMapping("/edit/{movieId}")
-    public ResponseEntity<ResponseObject<Movie>> editMovie(@PathVariable("movieId") Long movieId,
+    public ResponseEntity<ResponseObject<MovieDTO>> editMovie(@PathVariable("movieId") Long movieId,
             @RequestBody Movie movie) {
-        ResponseObject<Movie> result = new ResponseObject<>();
-        try {
-            Movie editedMovie = movieService.editMovie(movieId, movie);
-            result.setMessage("Change Movie successfully");
-            result.setData(editedMovie);
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (Exception e) {
-            result.setMessage("Change Movie failed: " + e.getMessage());
-            result.setData(null);
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        ResponseObject<MovieDTO> result = new ResponseObject<>();
+        MovieDTO editedMovieDTO = movieService.editMovie(movieId, movie);
+        result.setMessage("Change Movie successfully");
+        result.setData(editedMovieDTO);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
-
+    
     @DeleteMapping("/deleteMovie/{movieId}")
     public ResponseEntity<ResponseObject<Void>> deleteMovie(@PathVariable("movieId") Long movieId) throws Exception {
         ResponseObject<Void> result = new ResponseObject<>();
-        try {
-            movieService.deleteMovie(movieId);
-            result.setMessage("Delete Movie successfully");
-            return new ResponseEntity<ResponseObject<Void>>(result, HttpStatus.OK);
-        } catch (Exception e) {
-            result.setMessage("Delete Movie failed: " + e.getMessage());
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        movieService.deleteMovie(movieId);
+        result.setMessage("Delete Movie successfully");
+        return new ResponseEntity<ResponseObject<Void>>(result, HttpStatus.OK);
     }
 
 }
