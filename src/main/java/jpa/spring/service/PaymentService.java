@@ -18,17 +18,16 @@ public class PaymentService {
     @Autowired
     private final PaymentRepository paymentRepository;
 
-    @Autowired final MoMoService moMoService;
+    @Autowired
+    private final ZaloPayService zaloPayService;
 
     @Transactional
     public Payment createPayment(Payment payment) {
-        // Call MoMoService to create payment
-        Map<String, String> response = moMoService.createPayment(payment.getAmount());
+        Map<String, String> response = zaloPayService.createPayment(payment.getAmount());
     
         payment.setTransactionId(response.get("transactionId"));
-        payment.setPaymentMethod("MOMO");
+        payment.setPaymentMethod("ZALOPAY");
     
-        // Save Payment entity
         return paymentRepository.save(payment);
     }
 
@@ -47,7 +46,5 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
         payment.setStatus(PaymentStatus.FAILED);
         return paymentRepository.save(payment);
-
     }
-
 }

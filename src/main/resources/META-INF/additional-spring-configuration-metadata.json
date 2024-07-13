@@ -15,13 +15,23 @@
     "description": "A description for 'security.jwt.secret-key'"
   },
   {
-    "name": "application.yml",
-    "type": "java.lang.String",
-    "description": "A description for 'application.yml'"
-  },
-  {
     "name": "spring.session.store-type",
     "type": "java.lang.String",
     "description": "A description for 'spring.session.store-type'"
+  },
+  {
+    "name": "twilio.phone.number",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.phone.number'"
+  },
+  {
+    "name": "twilio.account.sid",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.account.sid'"
+  },
+  {
+    "name": "twilio.auth.token",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.auth.token'"
   }
 ]}
