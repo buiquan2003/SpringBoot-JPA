@@ -36,28 +36,24 @@ public class UserController {
     // private final CookieSerializer cookieSerializer;
 
     @GetMapping("/getAll")
-    public ResponseEntity<ResponseObject<List<User>>> getAllUser() {
-        ResponseObject<List<User>> reponseObject = userService.getAllUser();
-        if (reponseObject.getError() == null) {
-            return ResponseEntity.ok(reponseObject);
-        } else {
-            return ResponseEntity.status(404).body(reponseObject);
-        }
+    public ResponseEntity<ResponseObject<User>> getAllUser() {
+      List<User> user = userService.getAllUser();
+      ResponseObject<User> result = new ResponseObject<>();
+      result.setDaList(user);
+      result.setMessage("Get profile successfully");
+      return new ResponseEntity<ResponseObject<User>>(result, HttpStatus.OK);
+      
+       
     }
 
     @PostMapping(path = "/signup")
     public ResponseEntity<ResponseObject<User>> register(@RequestBody @Valid User register) {
-        ResponseObject<User> result = new ResponseObject<>();
-        try {
+            ResponseObject<User> result = new ResponseObject<>();
             User user = userService.register(register);
             result.setMessage("Create a new account successfully");
             result.setData(user);
             return new ResponseEntity<ResponseObject<User>>(result, HttpStatus.OK);
-        } catch (Exception e) {
-            result.setMessage("Failed to create a new account: " + e.getMessage());
-            result.setData(null);
-            return new ResponseEntity<ResponseObject<User>>(result, HttpStatus.BAD_REQUEST);
-        }
+        
 
     }
 

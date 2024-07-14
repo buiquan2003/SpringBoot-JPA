@@ -41,18 +41,17 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public ResponseObject<List<User>> getAllUser() {
+    public List<User> getAllUser() {
         ResponseObject<List<User>> reponseObject = new ResponseObject<>();
         List<User> users = repository.findAll();
         reponseObject.setMessage("Success");
         reponseObject.setData(users);
-        return reponseObject;
-
+        return users;
     }
 
-    public User register(User registerDTO) throws Exception {
+    public User register(User registerDTO) {
         if (repository.findById(registerDTO.getUsername()).isPresent()) {
-            throw new Exception("Username " + registerDTO.getUsername() + " is already exist.");
+            throw new UnknownError("Username " + registerDTO.getUsername() + " is already exist.");
         }
 
         String hashPassword = bCryptPasswordEncoder.encode(registerDTO.getPassword());
@@ -63,8 +62,7 @@ public class UserService {
         newUserAccount.setRole("ROLE_USER");
         newUserAccount.setDelFlag(false);
         newUserAccount.setUTimestmap(ZonedDateTime.now());
-        repository.save(newUserAccount);
-        return newUserAccount;
+        return repository.save(newUserAccount);
     }
 
     public boolean validateUserCredentials(@RequestBody User loginUser) {
@@ -80,7 +78,7 @@ public class UserService {
         UserAccountDetail accountDetail = repository
                 .findById(user.getUsername())
                 .map(userAccount -> new UserAccountDetail(userAccount))
-                .orElseThrow();
+                .orElseThrow(() -> new UnknownError("User not found"));
 
         TokenAccount tokenAccount = new TokenAccount();
         tokenAccount.setAccsessToken(jwtTokenProvider.generateToken(accountDetail));
@@ -99,21 +97,21 @@ public class UserService {
 
     }
 
-    public User changPassword(ChangPasswordDTO changPasswordDTO) throws Exception {
+    public User changPassword(ChangPasswordDTO changPasswordDTO) {
         String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 .getUsername();
         User user = repository.findByUsername(currentUsername)
-                .orElseThrow(() -> new Exception("User not found"));
+                .orElseThrow(() -> new UnknownError("User not found"));
         String hashPassword = bCryptPasswordEncoder.encode(changPasswordDTO.getNewPassword());
         user.setPassword(hashPassword);
         repository.save(user);
         return user;
     }
 
-    public User editUser(User user) throws Exception {
+    public User editUser(User user) {
         String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 .getUsername();
-        User edit = repository.findByUsername(currentUsername).orElseThrow(() -> new Exception(" user not found"));
+        User edit = repository.findByUsername(currentUsername).orElseThrow(() -> new UnknownError(" user not found"));
         String eamil = user.getEmail();
         edit.setEmail(eamil);
         repository.save(edit);

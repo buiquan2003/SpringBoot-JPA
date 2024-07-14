@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jpa.spring.config.exception.UnknowException;
+import jpa.spring.config.exception.UserAccountExistingException;
 import jpa.spring.model.entities.Movie;
 import jpa.spring.model.entities.MovieFile;
 import jpa.spring.repository.MovieFileRepository;
@@ -33,16 +35,17 @@ public class MovieFileService {
 
     public MovieFile addMovieFile(Long movieId, MovieFile movieFile) {
         Movie movie = movieRepository.findById(movieId)
-                .orElseThrow();
+                .orElseThrow(() -> new UnknowException("Movie with ID " + movieId + " does not exist."));
         movieFile.setMovie(movie);
         return fileService.save(movieFile);
 
     }
 
-    public MovieFile updateMovieFile(Long fileId, MovieFile movieFileDetails) throws Exception {
+    public MovieFile updateMovieFile(Long fileId, MovieFile movieFileDetails) {
         Optional<MovieFile> movieFile = fileService.findById(fileId);
         if (!movieFile.isPresent()) {
-            throw new Exception("Movie with ID " + fileId + " does not exist.");
+                      throw new UserAccountExistingException(
+                    "Username " + movieFile + " already exist. Please try an other!");
         }
         MovieFile file = movieFile.get();
         file.setFileUrl(movieFileDetails.getFileUrl());
@@ -51,9 +54,9 @@ public class MovieFileService {
         return fileService.save(file);
     }
 
-    public void deleteMovieFile(Long movieFileId) throws Exception {
+    public void deleteMovieFile(Long movieFileId) {
         MovieFile movieFile = fileService.findById(movieFileId)
-                .orElseThrow(() -> new Exception("Movie with ID " + movieFileId + " does not exist."));
+                .orElseThrow(() -> new UnknowException("Movie with ID " + movieFileId + " does not exist."));
         movieFile.setDelFlag(true);
         fileService.save(movieFile);
     }

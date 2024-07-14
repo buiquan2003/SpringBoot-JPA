@@ -21,4 +21,5 @@ public class ResponseObject<T> {
     private List<ErrorObject> errors;
     private ErrorObject error;
     private T data;
+    private List<T> daList;
 }
