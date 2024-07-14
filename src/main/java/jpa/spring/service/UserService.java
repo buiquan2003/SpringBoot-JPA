@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
-import java.util.UUID;
 
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +61,6 @@ public class UserService {
     private String jwtAccessKey;
 
     private final Map<String, String> otpStorage = new HashMap<>();
-    private final Random random = new Random();
 
     private final AuthenticationManager authenticationManager;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -218,70 +216,100 @@ public class UserService {
 
     public Map<String, String> signinWithGoogle(Map<String, String> body) {
         Map<String, String> tokens = new HashMap<>();
+        String email = body.get("email");
+        String googleId = body.get("googleId");
 
-        User existingUser = repository.findByEmail(body.get("email")).orElse(null);
+        User existingUser = repository.findByEmail(email).orElse(null);
 
         if (existingUser != null) {
-            String accessToken = generateAccessTokenGG(existingUser);
-            String refreshToken = generateRefreshTokenGG(existingUser);
+            existingUser.setGoogleId(googleId);
+            existingUser.setAuthType("google");
+            repository.save(existingUser);
 
-            if (existingUser.getGoogleId() == null) {
-                existingUser.setGoogleId(body.get("googleId"));
-                existingUser.setAuthType("google");
-                repository.save(existingUser);
-            }
-
+            String accessToken = jwtTokenProvider.generateAccessTokenPhone(existingUser);
+            String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
             tokens.put("accessToken", accessToken);
             tokens.put("refreshToken", refreshToken);
-            return tokens;
+        } else {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUsername(body.get("username"));
+            newUser.setGoogleId(googleId);
+            newUser.setAuthType("google");
+            newUser.setPassword(bCryptPasswordEncoder.encode(googleId)); 
+            newUser.setVerified(true);
+            repository.save(newUser);
+            existingUser = newUser;
         }
 
-        String hashedPassword = bCryptPasswordEncoder.encode(body.get("googleId"));
-
-        User newUser = new User();
-        newUser.setAuthType("google");
-        newUser.setGoogleId(body.get("googleId"));
-        newUser.setUsername(body.get("first_name") + " " + body.get("last_name"));
-        newUser.setEmail(body.get("email"));
-        newUser.setPassword(hashedPassword);
-        newUser.setVerified(true);
-        newUser.setAddress("");
-
-        repository.save(newUser);
-
-        String accessToken = generateAccessTokenGG(newUser);
-        String refreshToken = generateRefreshTokenGG(newUser);
-
+        String accessToken = jwtTokenProvider.generateAccessTokenPhone(existingUser);
+        String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
         tokens.put("accessToken", accessToken);
         tokens.put("refreshToken", refreshToken);
         return tokens;
-    }
-
-    public String generateAccessTokenGG(User user) {
-        return UUID.randomUUID().toString(); 
-    }
-
-    public String generateRefreshTokenGG(User user) {
-        return UUID.randomUUID().toString(); 
     }
         
     public String generateOtp(String phoneNumber) {
         Optional<User> user = repository.findByPhone(phoneNumber);
 
-        if (user == null) {
-            throw new IllegalArgumentException("Phone number not associated with any user.");
+        if (!user.isPresent()) {
+            User newUser = new User();
+            newUser.setPhone(phoneNumber);
+            newUser.setVerified(false); 
+            newUser.setAuthType("phone");
+            repository.save(newUser);
         }
 
-        String otp = String.format("%06d", random.nextInt(999999));
+        String otp = String.format("%06d", new Random().nextInt(999999));
         otpStorage.put(phoneNumber, otp);
         return otp;
     }
-
 
     public boolean validateOtp(String phoneNumber, String otp) {
         return otp.equals(otpStorage.get(phoneNumber));
     }
 
+    public Map<String, String> signInWithPhone(String phoneNumber, String otp) {
+        if (validateOtp(phoneNumber, otp)) {
+            User existingUser = repository.findByPhone(phoneNumber)
+                    .orElseThrow(() -> new IllegalArgumentException("Phone number not found"));
 
-    
+            String accessToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
+            String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
+
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("accessToken", accessToken);
+            tokens.put("refreshToken", refreshToken);
+            return tokens;
+        } else {
+            throw new RuntimeException("Invalid OTP");
+        }
+    }
+
+    public Map<String, String> registerAndSignInWithPhone(String phoneNumber, String otp) {
+        if (validateOtp(phoneNumber, otp)) {
+            Optional<User> userOpt = repository.findByPhone(phoneNumber);
+            User user;
+
+            if (userOpt.isPresent()) {
+                user = userOpt.get();
+            } else {
+                user = new User();
+                user.setPhone(phoneNumber);
+                user.setVerified(true);
+                repository.save(user);
+            }
+
+            String accessToken = jwtTokenProvider.generateRefreshTokenPhone(user);
+            String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(user);
+
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("accessToken", accessToken);
+            tokens.put("refreshToken", refreshToken);
+            return tokens;
+        } else {
+            throw new RuntimeException("Invalid OTP");
+        }
+    }
+
 }

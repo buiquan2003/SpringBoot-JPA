@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jpa.spring.config.utils.CookeiUtils;
 import jpa.spring.config.utils.SessionUtil;
 import jpa.spring.core.ResponseObject;
+import jpa.spring.model.dto.PhoneDTO;
 import jpa.spring.model.dto.UserCertification;
 import jpa.spring.model.entities.User;
 import jpa.spring.service.TwilioService;
@@ -95,12 +96,32 @@ public class UserController {
 
     }
 
+    @PostMapping("/signin/phone")
+    public ResponseEntity<?> signinWithPhone(@RequestBody PhoneDTO phoneDTO) {
+        ResponseObject<PhoneDTO> result = new ResponseObject<>();
+        try {
+            Map<String, String> tokens = userService.registerAndSignInWithPhone(phoneDTO.getPhoneNumber(), phoneDTO.getOtp());
+            phoneDTO.setAccessToken(tokens.get("accessToken"));
+            phoneDTO.setRefreshToken(tokens.get("refreshToken"));
+            result.setMessage("Sign in successfully");
+            result.setData(phoneDTO);
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            result.setMessage("Sign in failed: " + e.getMessage());
+            result.setData(null);
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody Map<String, String> request) {
-        String phoneNumber = request.get("phoneNumber");
-        String otp = userService.generateOtp(phoneNumber);
-        twilioService.sendOtp(phoneNumber, otp);
-        return ResponseEntity.ok("OTP has been sent to your phone number.");
+    public ResponseEntity<ResponseObject<PhoneDTO>> login(@RequestBody PhoneDTO phoneDTO) {
+        ResponseObject<PhoneDTO> result = new ResponseObject<>();
+        String otp = userService.generateOtp(phoneDTO.getPhoneNumber());
+        phoneDTO.setOtp(otp);
+        result.setMessage("OTP sent successfully");
+        result.setData(phoneDTO);
+        twilioService.sendOtp(phoneDTO);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @PostMapping("/{userId}/fcm-token")
@@ -109,15 +130,5 @@ public class UserController {
         return ResponseEntity.ok("FCM token updated successfully.");
     }
 
-    @PostMapping("/verify")
-    public ResponseEntity<String> verifyOtp(@RequestBody Map<String, String> request) {
-        String phoneNumber = request.get("phoneNumber");
-        String otp = request.get("otp");
-        boolean isValid = userService.validateOtp(phoneNumber, otp);
-        if (isValid) {
-            return ResponseEntity.ok("OTP is valid. Login successful.");
-        } else {
-            return ResponseEntity.badRequest().body("Invalid OTP.");
-        }
-    }
+   
 }
