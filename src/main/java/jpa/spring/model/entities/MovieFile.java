@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Setter
 @Getter
 @RequiredArgsConstructor
@@ -17,6 +19,7 @@ public class MovieFile {
 
     @ManyToOne
     @JoinColumn(name = "movie_id")
+    @JsonManagedReference
     private Movie movie;
 
     @Column(nullable = false)

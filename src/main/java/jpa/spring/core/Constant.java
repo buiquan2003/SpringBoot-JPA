@@ -18,7 +18,7 @@ public class Constant {
     }
 
     public static class MovieRegex {
-        public static final String TITLE = "^[a-zA-Z0-9._-]{3,}$";
+        public static final String TITLE = "^[A-Z][a-zA-Z0-9._-]{2,}$";
         public static final String RELEASEYEAR = "^[12][0-9]{3}$";  
         public static final String DIRECTOR = "^[a-zA-Z\\s]+$";  
     }

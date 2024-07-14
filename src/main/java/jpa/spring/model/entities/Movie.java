@@ -1,7 +1,10 @@
 package jpa.spring.model.entities;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,7 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -29,10 +31,8 @@ public class Movie {
 
     private String title;
 
-    @NotBlank(message = "Description is mandatory")
     private String description;
 
-    @NotBlank(message = "Genre is mandatory")
     private String genre;
 
     private String releaseYear;
@@ -48,17 +48,13 @@ public class Movie {
     private Boolean delFlag;
 
     @ManyToMany
-    @JoinTable(
-        name = "movie_genre",
-        joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    private Set<Genre> genres;
+    @JoinTable(name = "movie_genre", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
+    @JsonManagedReference
+    private Set<Genre> genres = new HashSet<>();;
 
     @ManyToMany
-    @JoinTable(
-        name = "movie_actor",
-        joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "actor_id"))
-    private Set<Actor> actors;
+    @JoinTable(name = "movie_actor", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "actor_id"))
+    @JsonManagedReference
+    private Set<Actor> actors = new HashSet<>();
 
 }

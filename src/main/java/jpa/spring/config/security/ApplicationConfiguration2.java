@@ -22,7 +22,7 @@ public class ApplicationConfiguration2 {
 
     @Bean
     UserDetailsService userDetailsService() {
-        return username -> userRepository.findById(username)
+        return username -> userRepository.findByUsername(username)
                 .map(UserAccountDetail::new)
                 .orElseThrow(() -> new UsernameNotFoundException("Username " + username + " not found"));
     }
