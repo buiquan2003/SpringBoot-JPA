@@ -1,8 +1,10 @@
 package jpa.spring.config.security;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import jpa.spring.model.entities.User;
@@ -12,9 +14,11 @@ import lombok.RequiredArgsConstructor;
 public class UserAccountDetail implements UserDetails {
     private final User user;
 
-    @Override
+  @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -46,4 +50,7 @@ public class UserAccountDetail implements UserDetails {
     public boolean isEnabled() {
         return user.isEnabled();
     }
+
+    
+    
 }

@@ -41,7 +41,7 @@ public class GennerService {
     }
 
     public GenreDetailDTO createGenre(Genre genre) {
-     Optional<Genre> id = genreRepository.findById(genre.getGenreId());
+     Optional<Genre> id = genreRepository.findBygenreId(genre.getGenreId());
         if (id.isPresent()) {
             throw new UserAccountExistingException(
                     "id " + id + " already exist. Please try an other!");

@@ -20,7 +20,6 @@ public class MovieFile {
 
     @ManyToOne
     @JoinColumn(name = "movie_id")
-    @JsonManagedReference
     private Movie movie;
 
     @NotBlank(message = "File URL is mandatory")

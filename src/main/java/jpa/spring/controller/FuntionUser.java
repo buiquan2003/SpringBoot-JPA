@@ -20,14 +20,14 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/funtionUser")
+@RequestMapping("/api")
 public class FuntionUser {
 
     @Autowired
     private final UserService userService;
 
-    @PutMapping("/changpassword")
-    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    @PutMapping("/user/funUser/changpassword")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<User>> authenticate(@RequestBody ChangPasswordDTO changPasswordDTO) {
         ResponseObject<User> result = new ResponseObject<>();
         User user = userService.changPassword(changPasswordDTO);
@@ -36,7 +36,8 @@ public class FuntionUser {
         return new ResponseEntity<ResponseObject<User>>(result, HttpStatus.OK);
     }
 
-    @PutMapping("/edit")
+    @PutMapping("/user/funUser/edit")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<User>> putMethodName(@RequestBody User user) {
         ResponseObject<User> result = new ResponseObject<>();
         User newUser = userService.editUser(user);
@@ -45,7 +46,8 @@ public class FuntionUser {
         return new ResponseEntity<ResponseObject<User>>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/logout")
+    @GetMapping("/user/funUser/logout")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Void>> logout(HttpServletRequest request, HttpServletResponse response) {
         ResponseObject<Void> result = new ResponseObject<>();
         userService.logout(request, response);

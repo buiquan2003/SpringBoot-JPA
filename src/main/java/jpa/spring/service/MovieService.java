@@ -16,6 +16,7 @@ import jpa.spring.model.entities.Actor;
 import jpa.spring.model.entities.Genre;
 import jpa.spring.model.entities.Movie;
 import jpa.spring.repository.ActorRepository;
+import jpa.spring.repository.GenreRepository;
 import jpa.spring.repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,10 @@ public class MovieService {
 
     @Autowired
     private final ActorRepository actorRepository;
+
+    @Autowired
+    private final GenreRepository genreRepository;
+
 
     @Autowired
     private final MovieMapper movieMapper;
@@ -57,7 +62,7 @@ public class MovieService {
 
         Set<Genre> genres = movie.getGenres();
         for (Genre genre : genres) {
-            if (!actorRepository.existsById(genre.getGenreId())) {
+            if (!genreRepository.existsById(genre.getGenreId())) {
                 throw new UnknowException("Actor with ID \"" + genre.getGenreId() + "\" does not exist.");
             }
         }

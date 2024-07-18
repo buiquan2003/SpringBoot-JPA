@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import jpa.spring.core.ResponseObject;
@@ -23,14 +24,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/moviefiles")
-
+@RequestMapping("/api")
 public class MovieFileController {
 
     @Autowired
     private final MovieFileService movieFileService;
 
-    @GetMapping("/movie/{movieId}")
+    @GetMapping("/user/moviefiles/{movieId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<List<MovieFile>>> getMovieFilesByMovieId(@PathVariable Long movieId) {
         ResponseObject<List<MovieFile>> result = new ResponseObject<>();
         List<MovieFile> movieFiles = movieFileService.getMovieFilesByMovieId(movieId);
@@ -40,7 +41,8 @@ public class MovieFileController {
 
     }
 
-    @GetMapping("/{fileId}")
+    @GetMapping("/user/moviefiles/{fileId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<MovieFile>> getMovieFileById(@PathVariable Long fileId) {
         ResponseObject<MovieFile> result = new ResponseObject<>();
         Optional<MovieFile> movieFileOptional = movieFileService.getMovieFileById(fileId);
@@ -49,7 +51,8 @@ public class MovieFileController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @PostMapping("/movie/{movieId}")
+    @PostMapping("/admin/moviefiles/{movieId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<MovieFileDTO>> addMovieFile(@PathVariable("movieId") Long movieId,
             @RequestBody MovieFile movieFile) {
         ResponseObject<MovieFileDTO> result = new ResponseObject<>();
@@ -60,7 +63,8 @@ public class MovieFileController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @PutMapping("/{fileId}")
+    @PutMapping("/admin/moviefiles/{fileId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<MovieFileDTO>> updateMovieFile(@PathVariable("fileId") Long fileId,
             @RequestBody MovieFile movieFileDetails)
             throws Exception {
@@ -72,7 +76,8 @@ public class MovieFileController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{fileId}")
+    @DeleteMapping("/admin/moviefiles/{fileId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Void>> deleteMovieFile(@PathVariable Long fileId) {
         ResponseObject<Void> result = new ResponseObject<>();
         movieFileService.deleteMovieFile(fileId);

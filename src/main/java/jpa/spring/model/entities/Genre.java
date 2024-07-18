@@ -1,10 +1,12 @@
 package jpa.spring.model.entities;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,10 +30,9 @@ public class Genre {
     @Pattern(regexp = "^.{3,}$", message = "Content must be at least 3 characters long")
     private String name;
 
-    @ManyToMany(mappedBy = "genres")
+    @ManyToMany(mappedBy = "genres", fetch = FetchType.LAZY)
     @JsonBackReference
-
-    private Set<Movie> movies;
+    private Set<Movie> movies = new HashSet<>();
 
     private Boolean delFlag;
 

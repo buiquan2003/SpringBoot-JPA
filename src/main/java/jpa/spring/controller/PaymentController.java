@@ -10,20 +10,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
-@RequestMapping("/payments")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class PaymentController {
 
     @Autowired
     private final PaymentService paymentService;
 
-    @PostMapping("/create")
+    @PostMapping("/admim/payments/create")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Payment>> createPayment(@RequestBody Payment payment) {
         ResponseObject<Payment> result = new ResponseObject<>();
         Payment newPayment = paymentService.createPayment(payment);
@@ -33,7 +35,8 @@ public class PaymentController {
 
     }
 
-    @PostMapping("/{paymentId}/complete")
+    @PostMapping("/admin/payments/{paymentId}/complete")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Payment>> completePayment(@PathVariable Long paymentId) {
         ResponseObject<Payment> result = new ResponseObject<>();
         Payment payment = paymentService.completePayment(paymentId);
@@ -41,8 +44,9 @@ public class PaymentController {
         result.setData(payment);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
- 
-    @PostMapping("/{paymentId}/fail")
+
+    @PostMapping("/admin/payments/{paymentId}/fail")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Payment>> failPayment(@PathVariable Long paymentId) {
         ResponseObject<Payment> result = new ResponseObject<>();
         Payment payment = paymentService.failPayment(paymentId);
