@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
@@ -40,6 +41,7 @@ public class UserController {
     private final TwilioService twilioService;
 
     @GetMapping("/getAll")
+    @PreAuthorize("hasAnyRole( 'ADMIN')")
     public ResponseEntity<ResponseObject<User>> getAllUser() {
         List<User> user = userService.getAllUser();
         ResponseObject<User> result = new ResponseObject<>();
@@ -70,6 +72,7 @@ public class UserController {
             SessionUtil.setAttribute(request, "SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
             String sessionId = httpSession.getId();
             CookeiUtils.create(response, "JSESSIONID", sessionId, 7 * 24 * 60 * 60, true, true);
+
             try {
                 userService.sendOTPVerificationEmail(user.getUsername(), user.getEmail());
                 System.out.println("OTP has been sent successfully.");
@@ -77,6 +80,7 @@ public class UserController {
                 e.printStackTrace();
                 System.out.println("Error sending OTP: " + e.getMessage());
             }
+
             return new ResponseEntity<ResponseObject<UserCertification>>(result, HttpStatus.OK);
         } catch (Exception e) {
             result.setMessage("sign in Failed");
@@ -84,23 +88,37 @@ public class UserController {
             return new ResponseEntity<ResponseObject<UserCertification>>(result, HttpStatus.BAD_REQUEST);
         }
     }
-    
-
 
     @PostMapping("/signin/google")
     public ResponseEntity<?> signinWithGoogle(@RequestBody Map<String, String> body) {
         ResponseObject<User> result = new ResponseObject<>();
-        Map<String, String> tokens = userService.signinWithGoogle(body);
+        Map<String, String> tokens = userService.sregisterAndSignInWithGoogle(body);
         result.setMessage("succsee");
         return new ResponseEntity<>(tokens, HttpStatus.OK);
+    }
 
+    @PostMapping("/login/email")
+    public ResponseEntity<?> loginWithEmail(@RequestBody Map<String, String> body) {
+        ResponseObject<Map<String, String>> result = new ResponseObject<>();
+        try {
+            String email = body.get("email");
+            String otp = body.get("otp");
+            Map<String, String> tokens = userService.signInWithEmail(email, otp);
+            result.setMessage("Login successful");
+            result.setData(tokens);
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            result.setMessage("Login failed: " + e.getMessage());
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/signin/phone")
     public ResponseEntity<?> signinWithPhone(@RequestBody PhoneDTO phoneDTO) {
         ResponseObject<PhoneDTO> result = new ResponseObject<>();
         try {
-            Map<String, String> tokens = userService.registerAndSignInWithPhone(phoneDTO.getPhoneNumber(), phoneDTO.getOtp());
+            Map<String, String> tokens = userService.registerAndSignInWithPhone(phoneDTO.getPhoneNumber(),
+                    phoneDTO.getOtp());
             phoneDTO.setAccessToken(tokens.get("accessToken"));
             phoneDTO.setRefreshToken(tokens.get("refreshToken"));
             result.setMessage("Sign in successfully");
@@ -113,7 +131,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/login")
+    @PostMapping("/login/phone")
     public ResponseEntity<ResponseObject<PhoneDTO>> login(@RequestBody PhoneDTO phoneDTO) {
         ResponseObject<PhoneDTO> result = new ResponseObject<>();
         String otp = userService.generateOtp(phoneDTO.getPhoneNumber());
@@ -130,5 +148,4 @@ public class UserController {
         return ResponseEntity.ok("FCM token updated successfully.");
     }
 
-   
 }

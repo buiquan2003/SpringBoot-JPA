@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import jpa.spring.core.ResponseObject;
@@ -24,13 +25,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/reviews")
+@RequestMapping("/api")
 public class ReviewController {
 
     @Autowired
     private final ReviewService reviewService;
 
-    @GetMapping("/GetAllReview")
+    @GetMapping("/user/reviews/GetAllReview")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
     public ResponseEntity<ResponseObject<ReviewDTO>> getall() {
         List<ReviewDTO> reviews = reviewService.getAllReviews();
         ResponseObject<ReviewDTO> result = new ResponseObject<>();
@@ -39,7 +41,8 @@ public class ReviewController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/user/reviews/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Review>> getOne(@PathVariable Long id) {
         Optional<Review> review = reviewService.getbyReview(id);
         ResponseObject<Review> reult = new ResponseObject<>();
@@ -49,7 +52,8 @@ public class ReviewController {
 
     }
 
-    @PostMapping("/review/{movieId}/{userId}")
+    @PostMapping("user/reviews/createReview/{movieId}/{userId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Review>> createReview(@PathVariable("movieId") Long movieId,
             @PathVariable("userId") Long userId, @RequestBody Review reviewDetails) {
         ResponseObject<Review> reuslt = new ResponseObject<>();
@@ -59,7 +63,8 @@ public class ReviewController {
         return new ResponseEntity<>(reuslt, HttpStatus.OK);
     }
 
-    @PutMapping("updateReview/{id}")
+    @PutMapping("user/reviews/updateReview/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Review>> updateReview(@PathVariable("reviewId") Long reviewId,
             @RequestBody Review reviewDetails) {
         ResponseObject<Review> reuslt = new ResponseObject<>();
@@ -69,7 +74,8 @@ public class ReviewController {
         return new ResponseEntity<>(reuslt, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{reviewId}")
+    @DeleteMapping("/user/reviews/{reviewId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Void>> deleteReview(@PathVariable Long reviewId) {
         ResponseObject<Void> result = new ResponseObject<>();
         reviewService.deleteReview(reviewId);

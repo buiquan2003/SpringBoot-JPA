@@ -12,6 +12,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,14 +20,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
-@RequestMapping("/watchhistories")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class WatchHistoryController {
 
     @Autowired
     private final WatchHistoryService watchHistoryService;
 
-    @GetMapping("/getall")
+    @GetMapping("/user/watchhistories/getall")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<WatchHistory>> getall(){
         ResponseObject<WatchHistory> result = new ResponseObject<>();
         List<WatchHistory> histories = watchHistoryService.getall();
@@ -34,7 +36,8 @@ public class WatchHistoryController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/getby")
+    @GetMapping("/user/watchhistories/{historyId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<WatchHistory>> getBy(@PathVariable("historyId") Long historyId ){
         ResponseObject<WatchHistory> result = new ResponseObject<>();
         WatchHistory histories = watchHistoryService.getWatchHistorybyId(historyId);
@@ -43,7 +46,8 @@ public class WatchHistoryController {
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
-    @PostMapping("/add/{userId}/{movieId}")
+    @PostMapping("/user/watchhistories/add/{userId}/{movieId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<WatchHistory>> addWatchHistory(@PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId) {
         ResponseObject<WatchHistory> result = new ResponseObject<>();
@@ -53,7 +57,8 @@ public class WatchHistoryController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/user/watchhistories/{userId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<WatchHistory>> getWatchHistoryByUser(@PathVariable("userId") Long userId) {
         ResponseObject<WatchHistory> responseObject = new ResponseObject<>();
         List<WatchHistory> watchHistories = watchHistoryService.getWatchHistoryByUser(userId);
@@ -62,7 +67,8 @@ public class WatchHistoryController {
         return new ResponseEntity<>(responseObject, HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete/{historyId}")
+    @DeleteMapping("/user/watchhistories/delete/{historyId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<String> deleteWatchHistory(@PathVariable Long historyId) {
         watchHistoryService.deleteWatchHistory(historyId);
         return ResponseEntity.ok("Watch history deleted successfully.");

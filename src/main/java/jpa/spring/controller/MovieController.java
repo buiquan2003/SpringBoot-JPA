@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import jpa.spring.core.ResponseObject;
@@ -24,13 +25,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/movies")
+@RequestMapping("/api")
 public class MovieController {
 
     @Autowired
     private final MovieService movieService;
 
-    @GetMapping("/getAllMovie")
+    @GetMapping("/user/movies/getAllMovie")
+     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<List<MovieDTO>>> getAllMovies() {
         ResponseObject<List<MovieDTO>> responseObject = new ResponseObject<>();
         List<MovieDTO> movies = movieService.getAllMovies();
@@ -39,7 +41,8 @@ public class MovieController {
         return new ResponseEntity<>(responseObject, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/user/movies/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Movie>> getMovieById(@PathVariable Long id) {
         Optional<Movie> movie = movieService.getMovieById(id);
         ResponseObject<Movie> result = new ResponseObject<>();
@@ -48,8 +51,8 @@ public class MovieController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-
-    @PostMapping("/addMovie")
+    @PostMapping("/admin/movies/addMovie")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Movie>> addMovie(@RequestBody Movie movie) {
         ResponseObject<Movie> result = new ResponseObject<>();
         Movie newMovie = movieService.addMovie(movie);
@@ -58,7 +61,8 @@ public class MovieController {
             return new ResponseEntity<ResponseObject<Movie>>(result, HttpStatus.OK);
     }
 
-    @PutMapping("/edit/{movieId}")
+    @PutMapping("/admin/movies/edit/{movieId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<MovieDTO>> editMovie(@PathVariable("movieId") Long movieId,
             @RequestBody Movie movie) {
         ResponseObject<MovieDTO> result = new ResponseObject<>();
@@ -68,7 +72,8 @@ public class MovieController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
     
-    @DeleteMapping("/deleteMovie/{movieId}")
+    @DeleteMapping("admin/movies/deleteMovie/{movieId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Void>> deleteMovie(@PathVariable("movieId") Long movieId) throws Exception {
         ResponseObject<Void> result = new ResponseObject<>();
         movieService.deleteMovie(movieId);

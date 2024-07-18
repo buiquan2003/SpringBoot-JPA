@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +32,10 @@ import jpa.spring.core.ResponseObject;
 import jpa.spring.model.dto.ChangPasswordDTO;
 import jpa.spring.model.dto.UserCertification;
 import jpa.spring.model.dto.UserOTPVerificationDTO;
+import jpa.spring.model.entities.Role;
 import jpa.spring.model.entities.TokenAccount;
 import jpa.spring.model.entities.User;
+import jpa.spring.repository.RoleRepository;
 import jpa.spring.repository.TokenAccountRepository;
 import jpa.spring.repository.UserOTPRepository;
 import jpa.spring.repository.UserRepository;
@@ -46,13 +49,21 @@ public class UserService {
     private final UserRepository repository;
 
     @Autowired
+    private final RoleRepository roleRepository;
+
+    @Autowired
     private final TokenAccountRepository repositoryAccount;
 
     @Autowired
     private final UserOTPRepository otpRepository;
 
+
     @Autowired
     private final JavaMailSender mailSender;
+
+    @Autowired
+    private final NotificationService notificationService;
+
 
     @Value("${spring.mail.username}")
     private String mailUsername;
@@ -61,6 +72,8 @@ public class UserService {
     private String jwtAccessKey;
 
     private final Map<String, String> otpStorage = new HashMap<>();
+
+    private final Map<String, String> otpMail = new HashMap<>();
 
     private final AuthenticationManager authenticationManager;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -93,8 +106,16 @@ public class UserService {
     }
 
     public User register(User registerDTO) {
-        if (repository.findByUsername(registerDTO.getUsername()).isPresent()) {
+      
+        if (repository.findByUsername(registerDTO.getUsername()) != null) {
             throw new UnknownError("Username " + registerDTO.getUsername() + " is already exist.");
+        }
+
+        Role userRole = roleRepository.findByName("ROLE_USER");
+        if (userRole == null) {
+            userRole = new Role();
+            userRole.setName("ROLE_ADMIN");
+            roleRepository.save(userRole);
         }
 
         String hashPassword = bCryptPasswordEncoder.encode(registerDTO.getPassword());
@@ -102,7 +123,7 @@ public class UserService {
         newUserAccount.setUsername(registerDTO.getUsername());
         newUserAccount.setEmail(registerDTO.getEmail());
         newUserAccount.setPassword(hashPassword);
-        newUserAccount.setRole("ROLE_USER");
+        newUserAccount.setRoles(Set.of(userRole));
         newUserAccount.setAddress(registerDTO.getAddress());
         newUserAccount.setPhone(registerDTO.getPhone());
         newUserAccount.setAuthType(registerDTO.getAuthType());
@@ -138,6 +159,7 @@ public class UserService {
         certification.setExpiredTime(ZonedDateTime.now());
         certification.setRefreshToken(tokenAccount.getRefreshToken());
         certification.setRefreshTime(ZonedDateTime.now());
+        notificationService.createAndSendNotification(user, "login successfully");
         return certification;
 
     }
@@ -176,15 +198,13 @@ public class UserService {
             Random random = new Random();
             int otp = 100000 + random.nextInt(900000);
             String otpString = String.format("%06d", otp);
-
-            String hashedOTP = bCryptPasswordEncoder.encode(otpString);
-
             UserOTPVerificationDTO newOTPVerification = new UserOTPVerificationDTO();
             newOTPVerification.setUserId(username);
-            newOTPVerification.setOtp(hashedOTP);
             newOTPVerification.setCreatedAt(ZonedDateTime.now());
             newOTPVerification.setExpiresAt(ZonedDateTime.now().plusMinutes(3));
             otpRepository.save(newOTPVerification);
+
+            otpMail.put(email, otpString);
 
             SimpleMailMessage mailMessage = new SimpleMailMessage();
             mailMessage.setFrom(mailUsername);
@@ -203,6 +223,10 @@ public class UserService {
         }
     }
 
+    public Boolean verifyOtp(String emal, String otp) {
+        return otp.equals(otpMail.get(emal));
+    }
+
     public void updateFcmToken(Long userId, String fcmToken) {
         Optional<User> userOptional = repository.findById(userId);
         if (userOptional.isPresent()) {
@@ -214,7 +238,7 @@ public class UserService {
         }
     }
 
-    public Map<String, String> signinWithGoogle(Map<String, String> body) {
+    public Map<String, String> sregisterAndSignInWithGoogle(Map<String, String> body) {
         Map<String, String> tokens = new HashMap<>();
         String email = body.get("email");
         String googleId = body.get("googleId");
@@ -248,7 +272,24 @@ public class UserService {
         tokens.put("refreshToken", refreshToken);
         return tokens;
     }
-        
+
+    public Map<String, String> signInWithEmail(String email, String otp) {
+        if (verifyOtp(email, otp)) {
+            User existingUser = repository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("email number not found"));
+
+            String accessToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
+            String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
+
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("accessToken", accessToken);
+            tokens.put("refreshToken", refreshToken);
+            return tokens;
+        } else {
+            throw new UserAccountNotFoundException("Invalid OTP");
+        }
+    }
+
     public String generateOtp(String phoneNumber) {
         Optional<User> user = repository.findByPhone(phoneNumber);
 

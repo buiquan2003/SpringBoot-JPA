@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,13 +24,14 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/actors")
+@RequestMapping("/api")
 public class ActorController {
 
     @Autowired
     private final ActorService actorService;
 
-    @GetMapping("/getAllActor")
+    @GetMapping("/user/actors/getAllActor")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<ResponseObject<ActordetailDTO>> getAll() {
         List<ActordetailDTO> actors = actorService.getAllActor();
         ResponseObject<ActordetailDTO> result = new ResponseObject<>();
@@ -38,16 +40,18 @@ public class ActorController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/user/actors/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Actor>> getOne(@PathVariable Long id) {
         Optional<Actor> actor = actorService.getbyId(id);
         ResponseObject<Actor> result = new ResponseObject<>();
-        result.setMessage("get one actor successfully");
-        result.setData(actor.get());
+        result.setMessage("Get one actor successfully");
+        result.setData(actor.orElse(null));
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @PostMapping("/create")
+    @PostMapping("/admin/actors/create")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<ActordetailDTO>> addActor(@RequestBody Actor actor) {
         ResponseObject<ActordetailDTO> result = new ResponseObject<>();
         ActordetailDTO savedActor = actorService.createActor(actor);
@@ -56,25 +60,29 @@ public class ActorController {
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
-    @PutMapping("/edit/{actorId}")
+    @PutMapping("/admin/actors/edit/{actorId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseObject<ActordetailDTO>> update(@PathVariable("actorId") Long actorId, @RequestBody Actor actor) {
         ResponseObject<ActordetailDTO> result = new ResponseObject<>();
         ActordetailDTO newActor = actorService.updateActor(actorId, actor);
-        result.setMessage("update actor susscesfully");
+        result.setMessage("Update actor successfully");
         result.setData(newActor);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}") 
+    @DeleteMapping("/admin/actors/{id}") 
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseObject<Void>> deleteActor(@PathVariable("id") Long id) {
         ResponseObject<Void> result = new ResponseObject<>();
         actorService.deleteActor(id);
+        result.setMessage("Delete actor successfully");
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/with-movies")
-    public List<Actor> getActorsWithMovies() {
-        return actorService.getActorsWithMovies();
+    @GetMapping("/user/actors/with-movies")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")
+    public ResponseEntity<List<Actor>> getActorsWithMovies() {
+        List<Actor> actors = actorService.getActorsWithMovies();
+        return new ResponseEntity<>(actors, HttpStatus.OK);
     }
-
 }

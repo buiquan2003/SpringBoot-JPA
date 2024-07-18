@@ -3,9 +3,6 @@ package jpa.spring.model.entities;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,7 +22,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @RequiredArgsConstructor
-
 public class Movie {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,12 +54,10 @@ public class Movie {
 
     @ManyToMany
     @JoinTable(name = "movie_genre", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    @JsonManagedReference
     private Set<Genre> genres = new HashSet<>();;
 
     @ManyToMany
     @JoinTable(name = "movie_actor", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "actor_id"))
-    @JsonManagedReference
     private Set<Actor> actors = new HashSet<>();
 
 }
