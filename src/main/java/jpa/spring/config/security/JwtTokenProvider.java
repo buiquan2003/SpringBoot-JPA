@@ -7,11 +7,13 @@ import java.util.function.Function;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 
 import java.security.Key;
 import io.jsonwebtoken.security.Keys;
+import jpa.spring.model.entities.User;
 import io.jsonwebtoken.io.Decoders;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -62,13 +64,12 @@ public class JwtTokenProvider {
             long expiration) {
         return Jwts
                 .builder()
-                .claims(extraClaims)
-                .subject(userDetails.getUsername())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .setClaims(extraClaims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey())
                 .compact();
-
     }
 
     public Boolean isTokenValid(String token, UserDetails userDetails) {
@@ -87,10 +88,10 @@ public class JwtTokenProvider {
     public Claims extractAllClaims(String token) {
         try {
             return Jwts
-                    .parser()
+                    .parserBuilder()
                     .setSigningKey(getSignInKey())
                     .build()
-                    .parseSignedClaims(token)
+                    .parseClaimsJws(token)
                     .getBody();
         } catch (SignatureException e) {
             throw new UnsupportedJwtException(
@@ -98,9 +99,56 @@ public class JwtTokenProvider {
                     e);
         }
     }
-
+    
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String generateAccessTokenGG(User user) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("role", "google_user");
+        return buildToken(extraClaims, user, jwtExpiration);
+    }
+
+    public String generateRefreshTokenGG(User user) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("role", "google_user");
+        return buildToken(extraClaims, user, refreshExpiration);
+    }
+
+    private String buildToken(Map<String, Object> extraClaims, User user, long expiration) {
+        return Jwts
+                .builder()
+                .setClaims(extraClaims)
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    public String generateAccessTokenPhone(User user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+
+        return Jwts.builder()
+                .setSubject(Long.toString(user.getUserId()))
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+    }
+
+    public String generateRefreshTokenPhone(User user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+
+        return Jwts.builder()
+                .setSubject(Long.toString(user.getUserId()))
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS256 , secretKey)
+                .compact();
     }
 }

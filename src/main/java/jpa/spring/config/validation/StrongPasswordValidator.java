@@ -7,7 +7,10 @@ public class StrongPasswordValidator implements ConstraintValidator<StrongPasswo
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        return value.matches("^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&++!*()]).{8,}$");
+        if (value == null) {
+            return false; 
+        }
+        return value.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&++!*()]).{8,}$");
     }
 
     

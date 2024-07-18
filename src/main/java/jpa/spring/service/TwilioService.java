@@ -7,6 +7,8 @@ import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 
+import jpa.spring.model.dto.PhoneDTO;
+
 
 @Service
 public class TwilioService {
@@ -20,12 +22,12 @@ public class TwilioService {
     @Value("${twilio.phone.number}")
     private String fromPhoneNumber;
 
-    public void sendOtp(String toPhoneNumber, String otp) {
+    public void sendOtp(PhoneDTO phoneDTO) {
         Twilio.init(accountSid, authToken);
        Message.creator(
-                new PhoneNumber(toPhoneNumber),
+                new PhoneNumber(phoneDTO.getPhoneNumber()),
                 new PhoneNumber(fromPhoneNumber),
-                "Your OTP code is: " + otp)
+                "Your OTP code is: " + phoneDTO.getOtp())
                 .create();
     }
 }
