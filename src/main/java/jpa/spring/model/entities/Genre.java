@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ public class Genre {
     private Long genreId;
 
     @NotBlank(message = "Name is mandatory")
+    @Pattern(regexp = "^.{3,}$", message = "Content must be at least 3 characters long")
     private String name;
 
     @ManyToMany(mappedBy = "genres")

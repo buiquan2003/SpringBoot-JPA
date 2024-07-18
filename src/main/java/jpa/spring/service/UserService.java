@@ -1,9 +1,12 @@
 package jpa.spring.service;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +58,12 @@ public class UserService {
     @Value("${spring.mail.username}")
     private String mailUsername;
 
+    @Value("${security.jwt.secret-key}")
+    private String jwtAccessKey;
+
+    private final Map<String, String> otpStorage = new HashMap<>();
+    private final Random random = new Random();
+
     private final AuthenticationManager authenticationManager;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -66,6 +75,16 @@ public class UserService {
         reponseObject.setData(users);
         return users;
     }
+
+    public UserCertification getUserByPhone(String phone) {
+        Optional<User> userOpt = repository.findByPhone(phone);
+        if (!userOpt.isPresent()) {
+            throw new UnknowException("User with ID " + phone + " does not exist.");
+        }
+        return null;
+
+    }
+        
 
      public User getUserById(Long userId) {
         Optional<User> userOpt = repository.findById(userId);
@@ -86,6 +105,9 @@ public class UserService {
         newUserAccount.setEmail(registerDTO.getEmail());
         newUserAccount.setPassword(hashPassword);
         newUserAccount.setRole("ROLE_USER");
+        newUserAccount.setAddress(registerDTO.getAddress());
+        newUserAccount.setPhone(registerDTO.getPhone());
+        newUserAccount.setAuthType(registerDTO.getAuthType());
         newUserAccount.setDelFlag(false);
         newUserAccount.setUTimestmap(ZonedDateTime.now());
         return repository.save(newUserAccount);
@@ -193,5 +215,73 @@ public class UserService {
             throw new UserAccountNotFoundException("User with ID " + userId + " not found.");
         }
     }
+
+    public Map<String, String> signinWithGoogle(Map<String, String> body) {
+        Map<String, String> tokens = new HashMap<>();
+
+        User existingUser = repository.findByEmail(body.get("email")).orElse(null);
+
+        if (existingUser != null) {
+            String accessToken = generateAccessTokenGG(existingUser);
+            String refreshToken = generateRefreshTokenGG(existingUser);
+
+            if (existingUser.getGoogleId() == null) {
+                existingUser.setGoogleId(body.get("googleId"));
+                existingUser.setAuthType("google");
+                repository.save(existingUser);
+            }
+
+            tokens.put("accessToken", accessToken);
+            tokens.put("refreshToken", refreshToken);
+            return tokens;
+        }
+
+        String hashedPassword = bCryptPasswordEncoder.encode(body.get("googleId"));
+
+        User newUser = new User();
+        newUser.setAuthType("google");
+        newUser.setGoogleId(body.get("googleId"));
+        newUser.setUsername(body.get("first_name") + " " + body.get("last_name"));
+        newUser.setEmail(body.get("email"));
+        newUser.setPassword(hashedPassword);
+        newUser.setVerified(true);
+        newUser.setAddress("");
+
+        repository.save(newUser);
+
+        String accessToken = generateAccessTokenGG(newUser);
+        String refreshToken = generateRefreshTokenGG(newUser);
+
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+        return tokens;
+    }
+
+    public String generateAccessTokenGG(User user) {
+        return UUID.randomUUID().toString(); 
+    }
+
+    public String generateRefreshTokenGG(User user) {
+        return UUID.randomUUID().toString(); 
+    }
+        
+    public String generateOtp(String phoneNumber) {
+        Optional<User> user = repository.findByPhone(phoneNumber);
+
+        if (user == null) {
+            throw new IllegalArgumentException("Phone number not associated with any user.");
+        }
+
+        String otp = String.format("%06d", random.nextInt(999999));
+        otpStorage.put(phoneNumber, otp);
+        return otp;
+    }
+
+
+    public boolean validateOtp(String phoneNumber, String otp) {
+        return otp.equals(otpStorage.get(phoneNumber));
+    }
+
+
     
 }

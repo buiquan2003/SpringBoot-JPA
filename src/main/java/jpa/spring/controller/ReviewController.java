@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import jpa.spring.core.ResponseObject;
+import jpa.spring.model.dto.ReviewDTO;
 import jpa.spring.model.entities.Review;
-import jpa.spring.model.entities.ReviewDTO;
 import jpa.spring.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 

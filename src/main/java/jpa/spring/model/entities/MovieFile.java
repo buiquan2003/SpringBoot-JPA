@@ -1,6 +1,7 @@
 package jpa.spring.model.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -22,6 +23,7 @@ public class MovieFile {
     @JsonManagedReference
     private Movie movie;
 
+    @NotBlank(message = "File URL is mandatory")
     @Column(nullable = false)
     private String fileUrl;
 

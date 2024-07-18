@@ -47,6 +47,16 @@ public class User implements HttpSessionBindingListener {
     @Column(name = "fcm_token")
     private String fcmToken;
 
+    private String googleId;
+
+    private String authType = "email";
+
+    private boolean verified;
+
+    private String address;
+
+    private String phone;
+
     @NotNull
     private boolean delFlag;
 

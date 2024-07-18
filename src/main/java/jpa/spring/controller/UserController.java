@@ -11,9 +11,11 @@ import jpa.spring.config.utils.SessionUtil;
 import jpa.spring.core.ResponseObject;
 import jpa.spring.model.dto.UserCertification;
 import jpa.spring.model.entities.User;
+import jpa.spring.service.TwilioService;
 import jpa.spring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +34,9 @@ public class UserController {
 
     @Autowired
     private final UserService userService;
+
+    @Autowired
+    private final TwilioService twilioService;
 
     @GetMapping("/getAll")
     public ResponseEntity<ResponseObject<User>> getAllUser() {
@@ -78,10 +83,41 @@ public class UserController {
             return new ResponseEntity<ResponseObject<UserCertification>>(result, HttpStatus.BAD_REQUEST);
         }
     }
+    
+
+
+    @PostMapping("/signin/google")
+    public ResponseEntity<?> signinWithGoogle(@RequestBody Map<String, String> body) {
+        ResponseObject<User> result = new ResponseObject<>();
+        Map<String, String> tokens = userService.signinWithGoogle(body);
+        result.setMessage("succsee");
+        return new ResponseEntity<>(tokens, HttpStatus.OK);
+
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+        String otp = userService.generateOtp(phoneNumber);
+        twilioService.sendOtp(phoneNumber, otp);
+        return ResponseEntity.ok("OTP has been sent to your phone number.");
+    }
 
     @PostMapping("/{userId}/fcm-token")
     public ResponseEntity<String> updateFcmToken(@PathVariable Long userId, @RequestBody String fcmToken) {
         userService.updateFcmToken(userId, fcmToken);
         return ResponseEntity.ok("FCM token updated successfully.");
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<String> verifyOtp(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+        String otp = request.get("otp");
+        boolean isValid = userService.validateOtp(phoneNumber, otp);
+        if (isValid) {
+            return ResponseEntity.ok("OTP is valid. Login successful.");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid OTP.");
+        }
     }
 }
