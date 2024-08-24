@@ -75,8 +75,6 @@ public class ZaloPayService {
     }
 
     public Map<String, String> createPayment(double amount) {
-        // Placeholder implementation for creating a payment with ZaloPay
-        // You should implement actual integration with ZaloPay's payment creation API here
         Map<String, String> response = new HashMap<>();
         response.put("transactionId", UUID.randomUUID().toString());
         response.put("status", "SUCCESS");

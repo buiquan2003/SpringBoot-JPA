@@ -32,8 +32,5 @@ public class Manager implements Filter {
        Filter.super.destroy();
    }
 
-
-
-     
     
 }

@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import java.time.ZonedDateTime;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Setter
 @Getter
