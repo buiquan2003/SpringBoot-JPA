@@ -13,9 +13,9 @@ public class FCMService {
                 .setTitle(title)
                 .setBody(body)
                 .build();
-
-        Message message = Message.builder()
-                .setToken(token)
+                
+                Message message = Message.builder()
+                .setToken(token)  // Truyền token của người nhận vào đây
                 .setNotification(notification)
                 .build();
 

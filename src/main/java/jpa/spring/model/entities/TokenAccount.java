@@ -23,10 +23,14 @@ public class TokenAccount {
     private String username;
 
     private String accsessToken;
-
+    private String provider;
     private String refreshToken;
 
     @ManyToOne()
     @JoinColumn(name = "user_id")
     private User owner;
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
 }

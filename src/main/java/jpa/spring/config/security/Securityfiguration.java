@@ -20,7 +20,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import lombok.RequiredArgsConstructor;
 
-
 @SuppressWarnings("deprecation")
 @RequiredArgsConstructor
 @Configuration
@@ -31,7 +30,8 @@ public class Securityfiguration {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final DataSource dataSource;
-  
+    private final CustomOAuth2AuthenticationSuccessHandler successHandler;
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -47,8 +47,9 @@ public class Securityfiguration {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .rememberMe(rememberMe -> rememberMe
                         .tokenRepository(persistentTokenRepository())
-                        .tokenValiditySeconds(86400));
-
+                        .tokenValiditySeconds(86400))
+                .oauth2Login(oath -> oath
+                        .successHandler(successHandler));
         return http.build();
     }
 
@@ -58,6 +59,7 @@ public class Securityfiguration {
         tokenRepository.setDataSource(dataSource);
         return tokenRepository;
     }
+
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {

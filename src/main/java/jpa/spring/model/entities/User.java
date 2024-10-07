@@ -16,8 +16,8 @@ import jakarta.persistence.ManyToMany;
 import jakarta.servlet.http.HttpSessionBindingEvent;
 import jakarta.servlet.http.HttpSessionBindingListener;
 import jakarta.validation.constraints.NotNull;
-import jpa.spring.config.validation.StrongPassword;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -26,7 +26,7 @@ import lombok.Setter;
 @RequiredArgsConstructor
 @Getter
 @Setter
-
+@AllArgsConstructor
 public class User implements HttpSessionBindingListener {
 
     @Id
@@ -37,15 +37,12 @@ public class User implements HttpSessionBindingListener {
 
     private String email;
 
-    @StrongPassword(message = "password")
     private String password;
 
     private ZonedDateTime uTimestmap;
 
     @Column(name = "fcm_token")
     private String fcmToken;
-
-    private String googleId;
 
     private String authType = "email";
 
@@ -54,6 +51,9 @@ public class User implements HttpSessionBindingListener {
     private String address;
 
     private String phone;
+    private String Gender;
+    private String image;
+    private String Birthday;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))

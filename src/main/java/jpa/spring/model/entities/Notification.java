@@ -21,7 +21,8 @@ public class Notification {
 
     private String message;
 
-    private Boolean read;
+    @Column(name = "is_read")
+    private Boolean isRead;
 
     private Boolean delFlag;
     private ZonedDateTime createdAt = ZonedDateTime.now();
