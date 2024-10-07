@@ -1,0 +1,20 @@
+version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-container:3306/dbshop
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=quanbui2003
+      - SPRING_JPA_HIBERNATE_DIALECT=org.hibernate.dialect.MySQL8Dialect
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: quanbui2003
+      MYSQL_DATABASE: sakila
+    ports:
+      - "3307:3306"

@@ -1,23 +1,18 @@
 package jpa.spring.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-
+import java.util.*;
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -32,10 +27,8 @@ import jpa.spring.core.ResponseObject;
 import jpa.spring.model.dto.ChangPasswordDTO;
 import jpa.spring.model.dto.UserCertification;
 import jpa.spring.model.dto.UserOTPVerificationDTO;
-import jpa.spring.model.entities.Role;
 import jpa.spring.model.entities.TokenAccount;
 import jpa.spring.model.entities.User;
-import jpa.spring.repository.RoleRepository;
 import jpa.spring.repository.TokenAccountRepository;
 import jpa.spring.repository.UserOTPRepository;
 import jpa.spring.repository.UserRepository;
@@ -49,27 +42,16 @@ public class UserService {
     private final UserRepository repository;
 
     @Autowired
-    private final RoleRepository roleRepository;
-
-    @Autowired
     private final TokenAccountRepository repositoryAccount;
 
     @Autowired
     private final UserOTPRepository otpRepository;
 
-
     @Autowired
     private final JavaMailSender mailSender;
 
-    @Autowired
     private final NotificationService notificationService;
 
-
-    @Value("${spring.mail.username}")
-    private String mailUsername;
-
-    @Value("${security.jwt.secret-key}")
-    private String jwtAccessKey;
 
     private final Map<String, String> otpStorage = new HashMap<>();
 
@@ -95,41 +77,13 @@ public class UserService {
         return null;
 
     }
-        
 
-     public User getUserById(Long userId) {
+    public User getUserById(Long userId) {
         Optional<User> userOpt = repository.findById(userId);
         if (!userOpt.isPresent()) {
             throw new UnknowException("User with ID " + userId + " does not exist.");
         }
         return userOpt.get();
-    }
-
-    public User register(User registerDTO) {
-      
-        if (repository.findByUsername(registerDTO.getUsername()) != null) {
-            throw new UnknownError("Username " + registerDTO.getUsername() + " is already exist.");
-        }
-
-        Role userRole = roleRepository.findByName("ROLE_USER");
-        if (userRole == null) {
-            userRole = new Role();
-            userRole.setName("ROLE_ADMIN");
-            roleRepository.save(userRole);
-        }
-
-        String hashPassword = bCryptPasswordEncoder.encode(registerDTO.getPassword());
-        User newUserAccount = new User();
-        newUserAccount.setUsername(registerDTO.getUsername());
-        newUserAccount.setEmail(registerDTO.getEmail());
-        newUserAccount.setPassword(hashPassword);
-        newUserAccount.setRoles(Set.of(userRole));
-        newUserAccount.setAddress(registerDTO.getAddress());
-        newUserAccount.setPhone(registerDTO.getPhone());
-        newUserAccount.setAuthType(registerDTO.getAuthType());
-        newUserAccount.setDelFlag(false);
-        newUserAccount.setUTimestmap(ZonedDateTime.now());
-        return repository.save(newUserAccount);
     }
 
     public boolean validateUserCredentials(@RequestBody User loginUser) {
@@ -140,8 +94,12 @@ public class UserService {
     }
 
     public UserCertification authetioncate(User user) {
+        System.out.println("Starting authentication for user: " + user.getUsername());
         authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+            .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+        System.out.println("Authentication successful for user: " + user.getUsername());
+        System.out.println("Authentication successful for password: " + user.getUsername());
+
         UserAccountDetail accountDetail = repository
                 .findByUsername(user.getUsername())
                 .map(userAccount -> new UserAccountDetail(userAccount))
@@ -153,17 +111,21 @@ public class UserService {
         tokenAccount.setUsername(user.getUsername());
         repositoryAccount.save(tokenAccount);
 
+        if (user.getUserId() == null) {
+            System.out.println("User is not saved. Saving user first...");
+            user = repository.save(user);  // Lưu đối tượng User vào cơ sở dữ liệu
+        }
+        notificationService.createAndSendNotification(user, "login successfully");
+
         UserCertification certification = new UserCertification();
         certification.setUsername(user.getUsername());
         certification.setAccessToken(tokenAccount.getAccsessToken());
         certification.setExpiredTime(ZonedDateTime.now());
         certification.setRefreshToken(tokenAccount.getRefreshToken());
         certification.setRefreshTime(ZonedDateTime.now());
-        notificationService.createAndSendNotification(user, "login successfully");
         return certification;
-
     }
-
+    
     public User changPassword(ChangPasswordDTO changPasswordDTO) {
         String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 .getUsername();
@@ -207,7 +169,7 @@ public class UserService {
             otpMail.put(email, otpString);
 
             SimpleMailMessage mailMessage = new SimpleMailMessage();
-            mailMessage.setFrom(mailUsername);
+            // mailMessage.setFrom(mailUsername);
             mailMessage.setTo(email);
             mailMessage.setSubject("Smart Lunch OTP Verification Code");
             mailMessage.setText("Your OTP code is: " + otpString);
@@ -238,65 +200,13 @@ public class UserService {
         }
     }
 
-    public Map<String, String> sregisterAndSignInWithGoogle(Map<String, String> body) {
-        Map<String, String> tokens = new HashMap<>();
-        String email = body.get("email");
-        String googleId = body.get("googleId");
-
-        User existingUser = repository.findByEmail(email).orElse(null);
-
-        if (existingUser != null) {
-            existingUser.setGoogleId(googleId);
-            existingUser.setAuthType("google");
-            repository.save(existingUser);
-
-            String accessToken = jwtTokenProvider.generateAccessTokenPhone(existingUser);
-            String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
-            tokens.put("accessToken", accessToken);
-            tokens.put("refreshToken", refreshToken);
-        } else {
-            User newUser = new User();
-            newUser.setEmail(email);
-            newUser.setUsername(body.get("username"));
-            newUser.setGoogleId(googleId);
-            newUser.setAuthType("google");
-            newUser.setPassword(bCryptPasswordEncoder.encode(googleId)); 
-            newUser.setVerified(true);
-            repository.save(newUser);
-            existingUser = newUser;
-        }
-
-        String accessToken = jwtTokenProvider.generateAccessTokenPhone(existingUser);
-        String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
-        tokens.put("accessToken", accessToken);
-        tokens.put("refreshToken", refreshToken);
-        return tokens;
-    }
-
-    public Map<String, String> signInWithEmail(String email, String otp) {
-        if (verifyOtp(email, otp)) {
-            User existingUser = repository.findByEmail(email)
-                    .orElseThrow(() -> new IllegalArgumentException("email number not found"));
-
-            String accessToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
-            String refreshToken = jwtTokenProvider.generateRefreshTokenPhone(existingUser);
-
-            Map<String, String> tokens = new HashMap<>();
-            tokens.put("accessToken", accessToken);
-            tokens.put("refreshToken", refreshToken);
-            return tokens;
-        } else {
-            throw new UserAccountNotFoundException("Invalid OTP");
-        }
-    }
-
     public String generateOtp(String phoneNumber) {
         Optional<User> user = repository.findByPhone(phoneNumber);
 
         if (!user.isPresent()) {
             User newUser = new User();
             newUser.setPhone(phoneNumber);
-            newUser.setVerified(false); 
+            newUser.setVerified(false);
             newUser.setAuthType("phone");
             repository.save(newUser);
         }

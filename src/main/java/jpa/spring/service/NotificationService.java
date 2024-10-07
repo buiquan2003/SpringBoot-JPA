@@ -23,16 +23,22 @@ public class NotificationService {
     private final FCMService fcmService;
 
     public void createAndSendNotification(User owner, String message) {
+        // Tạo đối tượng Notification và thiết lập các thuộc tính cần thiết
         Notification notification = new Notification();
         notification.setOwner(owner);
         notification.setMessage(message);
-        notification.setRead(false);
+        notification.setIsRead(false);
         notification.setDelFlag(false);
         notification.setCreatedAt(ZonedDateTime.now());
-
+        
         notificationRepository.save(notification);
 
-        fcmService.sendNotification(owner.getFcmToken(), "New Notification", message);
+        String userToken = owner.getFcmToken();  
+        if (userToken != null && !userToken.isEmpty()) {
+            fcmService.sendNotification(userToken, "New Notification", message);
+        } else {
+            System.out.println("No FCM token found for user: " + owner.getUsername());
+        }
     }
 
     public Notification markNotificationAsRead(Long notificationId) {
@@ -42,7 +48,7 @@ public class NotificationService {
 
         }
         Notification notification = optional.get();
-        notification.setRead(true);
+        notification.setIsRead(true);
         return notification;
     }
 

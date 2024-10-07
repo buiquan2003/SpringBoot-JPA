@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 public class UserAccountDetail implements UserDetails {
     private final User user;
 
-  @Override
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
@@ -51,6 +51,4 @@ public class UserAccountDetail implements UserDetails {
         return user.isEnabled();
     }
 
-    
-    
 }
