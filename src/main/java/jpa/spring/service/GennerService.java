@@ -8,8 +8,7 @@ import org.springframework.stereotype.Service;
 
 import jpa.spring.repository.*;
 import lombok.RequiredArgsConstructor;
-import jpa.spring.config.exception.UnknowException;
-import jpa.spring.config.exception.UserAccountExistingException;
+import jpa.spring.config.exception.*;
 import jpa.spring.model.Mapper.GenreMapper;
 import jpa.spring.model.dto.*;
 import jpa.spring.model.entities.*;

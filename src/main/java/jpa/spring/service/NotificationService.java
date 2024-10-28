@@ -1,16 +1,15 @@
 package jpa.spring.service;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jpa.spring.config.exception.UnknowException;
-import jpa.spring.model.entities.Notification;
-import jpa.spring.model.entities.User;
-import jpa.spring.repository.NotificationRepository;
-import lombok.RequiredArgsConstructor;
+import jpa.spring.config.exception.*;
+import jpa.spring.model.entities.*;
+import jpa.spring.repository.*;
+import lombok.*;
 
 @Service
 @RequiredArgsConstructor

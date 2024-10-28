@@ -2,18 +2,12 @@ package jpa.spring.service;
 
 import org.springframework.stereotype.Service;
 import jpa.spring.config.exception.UnknowException;
-import jpa.spring.model.entities.Movie;
-import jpa.spring.model.entities.User;
-import jpa.spring.model.entities.WatchHistory;
-import jpa.spring.repository.MovieRepository;
-import jpa.spring.repository.UserRepository;
-import jpa.spring.repository.WatchHistoryRepository;
+import jpa.spring.model.entities.*;
+import jpa.spring.repository.*;
 import lombok.RequiredArgsConstructor;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Service

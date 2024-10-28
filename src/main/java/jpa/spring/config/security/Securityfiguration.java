@@ -48,9 +48,9 @@ public class Securityfiguration {
                 .rememberMe(rememberMe -> rememberMe
                         .tokenRepository(persistentTokenRepository())
                         .tokenValiditySeconds(86400))
-                .oauth2Login(oath -> oath
-                        .successHandler(successHandler));
-        return http.build();
+                        .oauth2Login(oath -> oath
+                        .successHandler(successHandler));       
+                         return http.build();
     }
 
     @Bean

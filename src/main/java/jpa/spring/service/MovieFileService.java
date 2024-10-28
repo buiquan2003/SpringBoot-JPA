@@ -1,19 +1,15 @@
 package jpa.spring.service;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jpa.spring.config.exception.UnknowException;
 import jpa.spring.model.Mapper.MovieFileMapper;
-import jpa.spring.model.dto.MovieFileDTO;
-import jpa.spring.model.entities.Movie;
-import jpa.spring.model.entities.MovieFile;
-import jpa.spring.repository.MovieFileRepository;
-import jpa.spring.repository.MovieRepository;
+import jpa.spring.model.dto.*;
+import jpa.spring.model.entities.*;
+import jpa.spring.repository.*;
 import lombok.RequiredArgsConstructor;
 
 @Service
