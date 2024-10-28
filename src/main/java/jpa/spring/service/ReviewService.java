@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import jpa.spring.config.exception.UnknowException;
 import jpa.spring.config.exception.UserAccountExistingException;
-import jpa.spring.model.dto.ReviewDTO;
+import jpa.spring.model.dto.*;
 import jpa.spring.model.entities.Movie;
 import jpa.spring.model.entities.Review;
 import jpa.spring.model.entities.User;

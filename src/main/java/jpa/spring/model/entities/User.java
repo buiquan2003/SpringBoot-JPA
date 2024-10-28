@@ -27,6 +27,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
+
 public class User implements HttpSessionBindingListener {
 
     @Id

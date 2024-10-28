@@ -6,32 +6,21 @@ import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jpa.spring.config.exception.UnknowException;
-import jpa.spring.config.exception.UserAccountNotFoundException;
-import jpa.spring.config.security.JwtTokenProvider;
-import jpa.spring.config.security.UserAccountDetail;
+import jakarta.servlet.http.*;
+import jakarta.validation.Valid;
+import jpa.spring.config.exception.*;
+import jpa.spring.config.security.*;
 import jpa.spring.core.ResponseObject;
-import jpa.spring.model.dto.ChangPasswordDTO;
-import jpa.spring.model.dto.UserCertification;
-import jpa.spring.model.dto.UserOTPVerificationDTO;
+import jpa.spring.model.dto.*;
 import jpa.spring.model.entities.TokenAccount;
 import jpa.spring.model.entities.User;
-import jpa.spring.repository.TokenAccountRepository;
-import jpa.spring.repository.UserOTPRepository;
-import jpa.spring.repository.UserRepository;
+import jpa.spring.repository.*;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -51,7 +40,6 @@ public class UserService {
     private final JavaMailSender mailSender;
 
     private final NotificationService notificationService;
-
 
     private final Map<String, String> otpStorage = new HashMap<>();
 
@@ -93,40 +81,48 @@ public class UserService {
                 && loginUser.getPassword().equals(loginUser.getPassword());
     }
 
-    public UserCertification authetioncate(User user) {
-        System.out.println("Starting authentication for user: " + user.getUsername());
-        authenticationManager
-            .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-        System.out.println("Authentication successful for user: " + user.getUsername());
-        System.out.println("Authentication successful for password: " + user.getUsername());
 
-        UserAccountDetail accountDetail = repository
-                .findByUsername(user.getUsername())
-                .map(userAccount -> new UserAccountDetail(userAccount))
-                .orElseThrow(() -> new UnknownError("User not found"));
+    public UserCertification authetioncate(@Valid SigninDTO2 userSignin) {
+    User user = repository.findByUsername(userSignin.getUsername())
+                          .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        TokenAccount tokenAccount = new TokenAccount();
-        tokenAccount.setAccsessToken(jwtTokenProvider.generateToken(accountDetail));
-        tokenAccount.setRefreshToken(jwtTokenProvider.generateRefreshToken(accountDetail));
-        tokenAccount.setUsername(user.getUsername());
-        repositoryAccount.save(tokenAccount);
+    authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(userSignin.getUsername(), userSignin.getPassword())
+    );
 
-        if (user.getUserId() == null) {
-            System.out.println("User is not saved. Saving user first...");
-            user = repository.save(user);  // Lưu đối tượng User vào cơ sở dữ liệu
-        }
-        notificationService.createAndSendNotification(user, "login successfully");
+    UserAccountDetail accountDetail = new UserAccountDetail(user);
 
-        UserCertification certification = new UserCertification();
-        certification.setUsername(user.getUsername());
-        certification.setAccessToken(tokenAccount.getAccsessToken());
-        certification.setExpiredTime(ZonedDateTime.now());
-        certification.setRefreshToken(tokenAccount.getRefreshToken());
-        certification.setRefreshTime(ZonedDateTime.now());
-        return certification;
-    }
+    // 4. Tìm kiếm token đã tồn tại dựa trên username
+    Optional<TokenAccount> existingTokenOpt = repositoryAccount.findByUsername(user.getUsername());
+
+    // 5. Tạo mới hoặc cập nhật token
+    TokenAccount tokenAccount = existingTokenOpt.orElse(new TokenAccount());
+    tokenAccount.setAccsessToken(jwtTokenProvider.generateToken(accountDetail)); // Tạo Access Token mới
+    tokenAccount.setRefreshToken(jwtTokenProvider.generateRefreshToken(accountDetail)); // Tạo Refresh Token mới
+    tokenAccount.setUsername(user.getUsername()); // Cập nhật username
+    tokenAccount.setOwner(user); // Liên kết với người dùng hiện tại
+
+    // 6. Lưu thông tin token vào cơ sở dữ liệu
+    repositoryAccount.save(tokenAccount);
+
+    // 7. Gửi thông báo đăng nhập thành công
+    notificationService.createAndSendNotification(user, "Login successfully");
+
+    // 8. Tạo đối tượng UserCertification để trả về cho người dùng
+    UserCertification certification = new UserCertification();
+    certification.setUsername(user.getUsername());
+    certification.setAccessToken(tokenAccount.getAccsessToken());
+    certification.setExpiredTime(ZonedDateTime.now().plusMinutes(60)); // Thời gian hết hạn Access Token
+    certification.setRefreshToken(tokenAccount.getRefreshToken());
+    certification.setRefreshTime(ZonedDateTime.now().plusDays(7)); // Thời gian hết hạn Refresh Token
+
+    // 9. Trả về thông tin chứng nhận người dùng
+    return certification;
+}
+
+
     
-    public User changPassword(ChangPasswordDTO changPasswordDTO) {
+    public User changPassword(@Valid ChangPasswordDTO changPasswordDTO) {
         String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 .getUsername();
         User user = repository.findByUsername(currentUsername)

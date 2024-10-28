@@ -13,22 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.servlet.ServletException;
-import jpa.spring.config.security.JwtTokenProvider;
-import jpa.spring.config.security.UserAccountDetail;
-import jpa.spring.model.dto.SignInDTO;
-import jpa.spring.model.entities.Role;
-import jpa.spring.model.entities.TokenAccount;
-import jpa.spring.model.entities.User;
-import jpa.spring.repository.RoleRepository;
-import jpa.spring.repository.TokenAccountRepository;
-import jpa.spring.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import jpa.spring.config.security.*;
+import jpa.spring.model.dto.*;
+import jpa.spring.model.entities.*;
+import jpa.spring.repository.*;
+import lombok.*;
 
 @Service
 @RequiredArgsConstructor
 public class OAuth2AuthenticationService {
-
-    // @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 
     private final UserRepository userRepository;
     private final OAuth2AuthorizedClientService authorizedClientService;
@@ -45,12 +38,6 @@ public class OAuth2AuthenticationService {
                 .loadAuthorizedClient(oauth2Token.getAuthorizedClientRegistrationId(), oauth2Token.getName());
 
         String provider = authorizedClient.getClientRegistration().getRegistrationId();
-        // String accessToken = authorizedClient.getAccessToken().getTokenValue();
-        // String refreshToken = authorizedClient.getRefreshToken() != null
-        // ? authorizedClient.getRefreshToken().getTokenValue()
-        // : null;
-      
-
         String username = oauth2User.getAttribute("name");
         String email = oauth2User.getAttribute("email");
         String gender = oauth2User.getAttribute("gender");

@@ -8,16 +8,8 @@ import java.lang.annotation.Target;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
-//Đây là annotation của Bean Validation API, xác định rằng annotation này 
-//sẽ sử dụng một lớp xác thực (UserAccountValidator) để thực hiện quá trình xác thực.
 @Constraint(validatedBy = UserAccountValidator.class)
-// Chỉ định rằng annotation này có thể được áp dụng cho các lớp (class) hoặc
-// interface.
 @Target({ ElementType.TYPE })
-// Chỉ định rằng annotation này sẽ được giữ lại tại thời điểm runtime. Điều này
-// có
-// nghĩa là annotation sẽ có thể được truy cập thông qua phản chiếu (reflection)
-// trong khi chương trình đang chạy.
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface UserAccountElement {

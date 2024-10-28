@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import jpa.spring.core.ResponseObject;
 import jpa.spring.model.dto.ChangPasswordDTO;
 import jpa.spring.model.entities.User;
@@ -28,7 +29,7 @@ public class FuntionUser {
 
     @PutMapping("/user/funUser/changpassword")
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
-    public ResponseEntity<ResponseObject<User>> authenticate(@RequestBody ChangPasswordDTO changPasswordDTO) {
+    public ResponseEntity<ResponseObject<User>> authenticate(@Valid @RequestBody ChangPasswordDTO changPasswordDTO) {
         ResponseObject<User> result = new ResponseObject<>();
         User user = userService.changPassword(changPasswordDTO);
         result.setMessage("Chang password successfully");
