@@ -26,10 +26,16 @@ public class GennerService {
     // @Autowired
     // private final BaseRedisService baseRedisService;
 
+    // @Autowired
+    // private final BaseRedisService baseRedisService;
+
     @Autowired
     private final GenreMapper genreMapper;
 
    // private static final String PRODUCT_KEY_PREFIX = "Gender:";
+
+
+    private static final String PRODUCT_KEY_PREFIX = "Gender:";
 
 
     public List<GenreDetailDTO> getAllGenres() {
@@ -39,6 +45,10 @@ public class GennerService {
 
     public Optional<Genre> getGenreById(Long genderId) {
      //   String id = String.valueOf(genderId);
+      //  baseRedisService.hashGet(PRODUCT_KEY_PREFIX, id);
+        return genreRepository.findById(genderId);
+    public Optional<Genre> getGenreById(Long genderId) {
+        String id = String.valueOf(genderId);
       //  baseRedisService.hashGet(PRODUCT_KEY_PREFIX, id);
         return genreRepository.findById(genderId);
     }
@@ -61,6 +71,7 @@ public class GennerService {
         }
 
         Genre genre2 = genreRepository.save(genre);
+      //  baseRedisService.hashSet(PRODUCT_KEY_PREFIX, genre2.getName(), genre2);
       //  baseRedisService.hashSet(PRODUCT_KEY_PREFIX, genre2.getName(), genre2);
         return genreMapper.genreDTO(genre2);
     }
