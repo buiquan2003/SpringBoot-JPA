@@ -23,16 +23,24 @@ public class GennerService {
      @Autowired
     private final MovieRepository movieRepository;
 
+    // @Autowired
+    // private final BaseRedisService baseRedisService;
+
     @Autowired
     private final GenreMapper genreMapper;
+
+    private static final String PRODUCT_KEY_PREFIX = "Gender:";
+
 
     public List<GenreDetailDTO> getAllGenres() {
         List<Genre> genres = genreRepository.findAll();
         return genres.stream().map(genreMapper::genreDTO).collect(Collectors.toList());
     }
 
-    public Optional<Genre> getGenreById(Long id) {
-        return genreRepository.findById(id);
+    public Optional<Genre> getGenreById(Long genderId) {
+        String id = String.valueOf(genderId);
+      //  baseRedisService.hashGet(PRODUCT_KEY_PREFIX, id);
+        return genreRepository.findById(genderId);
     }
 
     public List<Genre> getAllGenresTrue() {
@@ -53,6 +61,7 @@ public class GennerService {
         }
 
         Genre genre2 = genreRepository.save(genre);
+      //  baseRedisService.hashSet(PRODUCT_KEY_PREFIX, genre2.getName(), genre2);
         return genreMapper.genreDTO(genre2);
     }
 
