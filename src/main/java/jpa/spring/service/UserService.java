@@ -39,6 +39,9 @@ public class UserService {
     @Autowired
     private final JavaMailSender mailSender;
 
+    // @Autowired
+    // private final BaseRedisService baseRedisService;
+
     private final NotificationService notificationService;
 
     private final Map<String, String> otpStorage = new HashMap<>();
@@ -50,10 +53,10 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public List<User> getAllUser() {
-        ResponseObject<List<User>> reponseObject = new ResponseObject<>();
+        ResponseObject<List<User>> responseObject = new ResponseObject<>();
         List<User> users = repository.findAll();
-        reponseObject.setMessage("Success");
-        reponseObject.setData(users);
+        responseObject.setMessage("Success");
+        responseObject.setData(users);
         return users;
     }
 
@@ -92,31 +95,25 @@ public class UserService {
 
     UserAccountDetail accountDetail = new UserAccountDetail(user);
 
-    // 4. Tìm kiếm token đã tồn tại dựa trên username
     Optional<TokenAccount> existingTokenOpt = repositoryAccount.findByUsername(user.getUsername());
 
-    // 5. Tạo mới hoặc cập nhật token
     TokenAccount tokenAccount = existingTokenOpt.orElse(new TokenAccount());
     tokenAccount.setAccsessToken(jwtTokenProvider.generateToken(accountDetail)); // Tạo Access Token mới
     tokenAccount.setRefreshToken(jwtTokenProvider.generateRefreshToken(accountDetail)); // Tạo Refresh Token mới
-    tokenAccount.setUsername(user.getUsername()); // Cập nhật username
-    tokenAccount.setOwner(user); // Liên kết với người dùng hiện tại
+    tokenAccount.setUsername(user.getUsername());
+    tokenAccount.setOwner(user);
 
-    // 6. Lưu thông tin token vào cơ sở dữ liệu
     repositoryAccount.save(tokenAccount);
 
-    // 7. Gửi thông báo đăng nhập thành công
     notificationService.createAndSendNotification(user, "Login successfully");
 
-    // 8. Tạo đối tượng UserCertification để trả về cho người dùng
     UserCertification certification = new UserCertification();
     certification.setUsername(user.getUsername());
     certification.setAccessToken(tokenAccount.getAccsessToken());
-    certification.setExpiredTime(ZonedDateTime.now().plusMinutes(60)); // Thời gian hết hạn Access Token
+    certification.setExpiredTime(ZonedDateTime.now().plusMinutes(60));
     certification.setRefreshToken(tokenAccount.getRefreshToken());
-    certification.setRefreshTime(ZonedDateTime.now().plusDays(7)); // Thời gian hết hạn Refresh Token
+    certification.setRefreshTime(ZonedDateTime.now().plusDays(7));
 
-    // 9. Trả về thông tin chứng nhận người dùng
     return certification;
 }
 
