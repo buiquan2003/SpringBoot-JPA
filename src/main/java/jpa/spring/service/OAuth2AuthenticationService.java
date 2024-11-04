@@ -4,8 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.Set;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -31,13 +30,7 @@ public class OAuth2AuthenticationService {
     private final TokenAccountRepository tokenRepository;
     private final RoleRepository roleRepository;
 
-    // @Autowired
-    // private final BaseRedisService baseRedisService;
-
-    //private static final String PRODUCT_KEY_PREFIX = "product:";
-
-    // @Autowired
-    // private final BaseRedisService baseRedisService;
+    private final BaseRedisService baseRedisService;
 
     private static final String PRODUCT_KEY_PREFIX = "product:";
 
@@ -99,8 +92,7 @@ public class OAuth2AuthenticationService {
             token.setProvider(provider);
         }
         tokenRepository.save(token);
-    //    baseRedisService.hashSet(PRODUCT_KEY_PREFIX, username, token);
-    //    baseRedisService.hashSet(PRODUCT_KEY_PREFIX, username, token);
+        baseRedisService.hashSet(PRODUCT_KEY_PREFIX, username, token);
 
         return new SignInDTO(user.getUsername(), user.getEmail(), user.getImage(), access_token, refresh_token);
     }
