@@ -20,27 +20,42 @@ public class GennerService {
     @Autowired
     private final GenreRepository genreRepository;
 
-     @Autowired
+    @Autowired
     private final MovieRepository movieRepository;
 
-    // @Autowired
-    // private final BaseRedisService baseRedisService;
+    @Autowired
+    private final BaseRedisService baseRedisService;
 
     @Autowired
     private final GenreMapper genreMapper;
 
-    private static final String PRODUCT_KEY_PREFIX = "Gender:";
-
+    private static final String PRODUCT_KEY_PREFIX = "Gender:"; 
 
     public List<GenreDetailDTO> getAllGenres() {
-        List<Genre> genres = genreRepository.findAll();
+     
+        @SuppressWarnings("unchecked")
+        List<Genre> genres = (List<Genre>) baseRedisService.hashGet(PRODUCT_KEY_PREFIX, "genres");
+
+        if (genres == null || genres.isEmpty()) {
+             genres = genreRepository.findAll();
+            baseRedisService.hashSet(PRODUCT_KEY_PREFIX, "genres", genres);
+        }
+
         return genres.stream().map(genreMapper::genreDTO).collect(Collectors.toList());
     }
 
-    public Optional<Genre> getGenreById(Long genderId) {
-        String id = String.valueOf(genderId);
-      //  baseRedisService.hashGet(PRODUCT_KEY_PREFIX, id);
-        return genreRepository.findById(genderId);
+    public Optional<Genre> getGenreById(Long genreId) {
+        String id = String.valueOf(genreId);
+        @SuppressWarnings("unchecked")
+        Optional<Genre> genreFromCache = (Optional<Genre>) baseRedisService.hashGet(PRODUCT_KEY_PREFIX, id);
+        
+        if (genreFromCache.isPresent()) {
+            return genreFromCache; 
+        } else {
+            Optional<Genre> genreFromDb = genreRepository.findById(genreId);
+            genreFromDb.ifPresent(genre -> baseRedisService.hashSet(PRODUCT_KEY_PREFIX, id, genre));
+            return genreFromDb;
+        }
     }
 
     public List<Genre> getAllGenresTrue() {
@@ -48,37 +63,46 @@ public class GennerService {
     }
 
     public GenreDetailDTO createGenre(Genre genre) {
-     Optional<Genre> id = genreRepository.findBygenreId(genre.getGenreId());
-        if (id.isPresent()) {
-            throw new UserAccountExistingException(
-                    "id " + id + " already exist. Please try an other!");
+        Optional<Genre> existingGenre = genreRepository.findBygenreId(genre.getGenreId());
+        if (existingGenre.isPresent()) {
+            throw new UserAccountExistingException("id " + genre.getGenreId() + " already exists. Please try another!");
         }
+
         Set<Movie> movies = genre.getMovies();
         for (Movie movie : movies) {
             if (!movieRepository.existsById(movie.getMovieId())) {
-                throw new UnknowException("Actor with ID \"" + movie.getMovieId() + "\" does not exist.");
+                throw new UnknowException("Movie with ID \"" + movie.getMovieId() + "\" does not exist.");
             }
         }
 
-        Genre genre2 = genreRepository.save(genre);
-      //  baseRedisService.hashSet(PRODUCT_KEY_PREFIX, genre2.getName(), genre2);
-        return genreMapper.genreDTO(genre2);
+        Genre savedGenre = genreRepository.save(genre);
+        
+        List<Genre> genres = genreRepository.findAll(); 
+        baseRedisService.hashSet(PRODUCT_KEY_PREFIX, "genres", genres);
+        
+        return genreMapper.genreDTO(savedGenre);
     }
-
-    public Genre updatGenre(Long id, Genre genreDetails) {
+    
+    public Genre updateGenre(Long id, Genre genreDetails) {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Genre not found"));
         genre.setName(genreDetails.getName());
-        return genreRepository.save(genre);
-    }
+        Genre updatedGenre = genreRepository.save(genre);
 
+        baseRedisService.hashSet(PRODUCT_KEY_PREFIX, String.valueOf(updatedGenre.getGenreId()), updatedGenre);
+        
+        return updatedGenre;
+    }
 
     public Genre deleteGenre(Long id) {
-        Genre GenreMovie = genreRepository.findById(id)
+        Genre genreToDelete = genreRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Genre not found"));
-        GenreMovie.setDelFlag(true);
-        return genreRepository.save(GenreMovie);
+        genreToDelete.setDelFlag(true);
+        Genre deletedGenre = genreRepository.save(genreToDelete);
+        
+        List<Genre> genres = genreRepository.findAll();
+        baseRedisService.hashSet(PRODUCT_KEY_PREFIX, "genres", genres);
 
+        return deletedGenre;
     }
-
 }

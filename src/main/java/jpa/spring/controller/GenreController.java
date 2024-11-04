@@ -66,7 +66,7 @@ public class GenreController {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject<Genre>> updateGenre(@PathVariable("id") Long id, @RequestBody Genre genre) {
         ResponseObject<Genre> result = new ResponseObject<>();
-        Genre resutlGenre = gennerService.updatGenre(id, genre);
+        Genre resutlGenre = gennerService.updateGenre(id, genre);
         result.setMessage("get one genre succsefully");
         result.setData(resutlGenre);
         return new ResponseEntity<>(result, HttpStatus.OK);
