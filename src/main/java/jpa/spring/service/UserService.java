@@ -39,9 +39,7 @@ public class UserService {
     @Autowired
     private final JavaMailSender mailSender;
 
-    // @Autowired
-    // private final BaseRedisService baseRedisService;
-
+    @Autowired
     private final NotificationService notificationService;
 
     private final Map<String, String> otpStorage = new HashMap<>();
@@ -51,6 +49,10 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+
+    public Optional<User> findById(Long userId) {
+        return repository.findByUserId(userId);
+    }
 
     public List<User> getAllUser() {
         ResponseObject<List<User>> responseObject = new ResponseObject<>();
@@ -78,52 +80,48 @@ public class UserService {
     }
 
     public boolean validateUserCredentials(@RequestBody User loginUser) {
-        System.out
-                .println("Validating user: " + loginUser.getUsername() + " with password: " + loginUser.getPassword());
         return loginUser.getUsername().equals(loginUser.getUsername())
                 && loginUser.getPassword().equals(loginUser.getPassword());
     }
 
-
     public UserCertification authetioncate(@Valid SigninDTO2 userSignin) {
-    User user = repository.findByUsername(userSignin.getUsername())
-                          .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = repository.findByUsername(userSignin.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-    authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(userSignin.getUsername(), userSignin.getPassword())
-    );
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(userSignin.getUsername(), userSignin.getPassword()));
 
-    UserAccountDetail accountDetail = new UserAccountDetail(user);
+        UserAccountDetail accountDetail = new UserAccountDetail(user);
 
-    Optional<TokenAccount> existingTokenOpt = repositoryAccount.findByUsername(user.getUsername());
+        Optional<TokenAccount> existingTokenOpt = repositoryAccount.findByUsername(user.getUsername());
 
-    TokenAccount tokenAccount = existingTokenOpt.orElse(new TokenAccount());
-    tokenAccount.setAccsessToken(jwtTokenProvider.generateToken(accountDetail)); // Tạo Access Token mới
-    tokenAccount.setRefreshToken(jwtTokenProvider.generateRefreshToken(accountDetail)); // Tạo Refresh Token mới
-    tokenAccount.setUsername(user.getUsername());
-    tokenAccount.setOwner(user);
+        TokenAccount tokenAccount = existingTokenOpt.orElse(new TokenAccount());
+        tokenAccount.setAccsessToken(jwtTokenProvider.generateToken(accountDetail));
+        tokenAccount.setRefreshToken(jwtTokenProvider.generateRefreshToken(accountDetail));
+        tokenAccount.setUsername(user.getUsername());
+        tokenAccount.setOwner(user);
+        repositoryAccount.save(tokenAccount);
+        repositoryAccount.save(tokenAccount);
 
-    repositoryAccount.save(tokenAccount);
+        repositoryAccount.save(tokenAccount);
 
-    notificationService.createAndSendNotification(user, "Login successfully");
+        notificationService.createAndSendNotification(user, "Login successfully");
 
-    UserCertification certification = new UserCertification();
-    certification.setUsername(user.getUsername());
-    certification.setAccessToken(tokenAccount.getAccsessToken());
-    certification.setExpiredTime(ZonedDateTime.now().plusMinutes(60));
-    certification.setRefreshToken(tokenAccount.getRefreshToken());
-    certification.setRefreshTime(ZonedDateTime.now().plusDays(7));
+        UserCertification certification = new UserCertification();
+        certification.setUsername(user.getUsername());
+        certification.setAccessToken(tokenAccount.getAccsessToken());
+        certification.setExpiredTime(ZonedDateTime.now().plusMinutes(60));
+        certification.setRefreshToken(tokenAccount.getRefreshToken());
+        certification.setRefreshTime(ZonedDateTime.now().plusDays(7));
 
-    return certification;
-}
+        return certification;
+    }
 
-
-    
     public User changPassword(@Valid ChangPasswordDTO changPasswordDTO) {
         String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 .getUsername();
         User user = repository.findByUsername(currentUsername)
-                .orElseThrow(() -> new UnknownError("User not found"));
+                .orElseThrow(() -> new UnknowException("User not found"));
         String hashPassword = bCryptPasswordEncoder.encode(changPasswordDTO.getNewPassword());
         user.setPassword(hashPassword);
         repository.save(user);
@@ -133,7 +131,8 @@ public class UserService {
     public User editUser(User user) {
         String currentUsername = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 .getUsername();
-        User edit = repository.findByUsername(currentUsername).orElseThrow(() -> new UnknownError(" user not found"));
+        User edit = repository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UnknowException(" user not found"));
         String eamil = user.getEmail();
         edit.setEmail(eamil);
         repository.save(edit);
@@ -173,8 +172,7 @@ public class UserService {
             return new Response();
 
         } catch (Exception e) {
-            System.out.println("Error in sendOTPVerificationEmail: " + e.getMessage());
-            throw new Exception("Error occurred while sending OTP email", e);
+            throw new UnknowException("Error occurred while sending OTP email");
         }
     }
 
