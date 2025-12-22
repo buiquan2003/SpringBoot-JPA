@@ -2,6 +2,7 @@ package jpa.spring.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -37,6 +38,7 @@ public class UserController {
     @Autowired
     private final UserService userService;
 
+    @Operation(summary = "Lấy danh sách dữ liệu")
     @GetMapping("/getAll")
     @PreAuthorize("hasAnyRole( 'ADMIN')")
     public ResponseEntity<ResponseObject<User>> getAllUser() {
