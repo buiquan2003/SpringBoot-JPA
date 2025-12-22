@@ -22,7 +22,16 @@ Gradle
 Docker & Docker Compose
 MySQL / PostgreSQL (tùy cấu hình)
 📂 Kiến trúc & cấu trúc thư mục
-Dự án được tổ chức theo mô hình Controller – Service – Repository: src/main/java/ ├── controller/ // Xử lý request/response ├── service/ // Business logic ├── repository/ // Spring Data JPA Repository ├── entity/ // JPA Entity (mapping DB) ├── dto/ // Data Transfer Object (nếu có) ├── exception/ // Xử lý exception (nếu có) └── config/ // Cấu hình (Swagger, etc.)
+Dự án được tổ chức theo mô hình
+Controller – Service – Repository:
+src/main/java/ 
+├── controller/ // Xử lý request/response 
+├── service/ // Business logic 
+├── repository/ // Spring Data JPA Repository 
+├── entity/ // JPA Entity (mapping DB)
+├── dto/ // Data Transfer Object (nếu có) 
+├── exception/ // Xử lý exception (nếu có) 
+└── config/ // Cấu hình (Swagger, etc.)
 
 ⚙️ Cấu hình ứng dụng
 🔹 application.properties
